@@ -1,0 +1,21 @@
+﻿@model Internado.Infrastructure.Models.Residente
+@{
+    ViewData["Title"] = "Detalles de residente";
+}
+<h1 class="mb-3">Detalles</h1>
+
+<dl class="row">
+    <dt class="col-sm-2">Id</dt><dd class="col-sm-10">@Model.Id</dd>
+    <dt class="col-sm-2">Nombre</dt><dd class="col-sm-10">@Model.NombreCompleto</dd>
+    <dt class="col-sm-2">DPI</dt><dd class="col-sm-10">@Model.DPI</dd>
+    <dt class="col-sm-2">Tutor</dt><dd class="col-sm-10">@Model.Tutor</dd>
+    <dt class="col-sm-2">Estado</dt><dd class="col-sm-10">@Model.Estado</dd>
+    <dt class="col-sm-2">Nacimiento</dt><dd class="col-sm-10">@Model.FechaNacimiento</dd>
+    <dt class="col-sm-2">Ingreso</dt><dd class="col-sm-10">@Model.FechaIngreso</dd>
+    <dt class="col-sm-2">Egreso</dt><dd class="col-sm-10">@Model.FechaEgreso</dd>
+</dl>
+
+<p>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
+    <a asp-action="Index" class="btn btn-secondary">Volver</a>
+</p>

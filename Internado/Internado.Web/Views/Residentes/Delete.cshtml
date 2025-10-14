@@ -1,0 +1,15 @@
+﻿@model Internado.Infrastructure.Models.Residente
+@{
+    ViewData["Title"] = "Eliminar residente";
+}
+<h1 class="mb-3">Eliminar</h1>
+
+<div class="alert alert-warning">
+    ¿Confirmas eliminar al residente <strong>@Model.NombreCompleto</strong>?
+</div>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

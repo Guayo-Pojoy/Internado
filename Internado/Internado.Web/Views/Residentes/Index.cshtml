@@ -1,0 +1,39 @@
+﻿@model IEnumerable<Internado.Infrastructure.Models.Residente>
+@{
+    ViewData["Title"] = "Residentes";
+}
+<h1 class="mb-3">Residentes</h1>
+
+<p>
+    <a asp-action="Create" class="btn btn-primary">Nuevo residente</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>NombreCompleto</th>
+            <th>DPI</th>
+            <th>Tutor</th>
+            <th>Estado</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var r in Model)
+{
+        <tr>
+            <td>@r.Id</td>
+            <td>@r.NombreCompleto</td>
+            <td>@r.DPI</td>
+            <td>@r.Tutor</td>
+            <td>@r.Estado</td>
+            <td class="text-nowrap">
+                <a asp-action="Details" asp-route-id="@r.Id">Detalles</a> |
+                <a asp-action="Edit" asp-route-id="@r.Id">Editar</a> |
+                <a asp-action="Delete" asp-route-id="@r.Id">Eliminar</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

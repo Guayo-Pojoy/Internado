@@ -1,0 +1,59 @@
+﻿@model Internado.Infrastructure.Models.Residente
+@{
+    ViewData["Title"] = "Nuevo residente";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="Create" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="NombreCompleto" class="form-label"></label>
+        <input asp-for="NombreCompleto" class="form-control" />
+        <span asp-validation-for="NombreCompleto" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="DPI" class="form-label"></label>
+        <input asp-for="DPI" class="form-control" />
+        <span asp-validation-for="DPI" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Tutor" class="form-label"></label>
+        <input asp-for="Tutor" class="form-control" />
+        <span asp-validation-for="Tutor" class="text-danger"></span>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label asp-for="FechaNacimiento" class="form-label"></label>
+            <input asp-for="FechaNacimiento" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+            <span asp-validation-for="FechaNacimiento" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="FechaIngreso" class="form-label"></label>
+            <input asp-for="FechaIngreso" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+            <span asp-validation-for="FechaIngreso" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="FechaEgreso" class="form-label"></label>
+            <input asp-for="FechaEgreso" type="date" asp-format="{0:yyyy-MM-dd}" class="form-control" />
+            <span asp-validation-for="FechaEgreso" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mb-3 mt-3">
+        <label asp-for="Estado" class="form-label"></label>
+        <select asp-for="Estado" class="form-select" asp-items="ViewBag.Estados"></select>
+        <span asp-validation-for="Estado" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

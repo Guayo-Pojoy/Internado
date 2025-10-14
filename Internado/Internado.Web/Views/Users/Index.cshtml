@@ -1,0 +1,64 @@
+﻿@model IEnumerable<object>
+@{
+    ViewData["Title"] = "Usuarios";
+}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Usuarios</h3>
+    <a class="btn btn-primary" asp-action="Create">Nuevo</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Usuario</th>
+          <th>Correo</th>
+          <th>Rol</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+@foreach (var u in Model)
+{
+    string Nombre  = u.GetType().GetProperty("Nombre")?.GetValue(u)?.ToString() ?? "";
+    string Usuario = u.GetType().GetProperty("Usuario")?.GetValue(u)?.ToString()
+                  ?? u.GetType().GetProperty("Usuario1")?.GetValue(u)?.ToString()
+                  ?? u.GetType().GetProperty("Login")?.GetValue(u)?.ToString()
+                  ?? "";
+    string Correo  = u.GetType().GetProperty("Correo")?.GetValue(u)?.ToString()
+                  ?? u.GetType().GetProperty("Email")?.GetValue(u)?.ToString()
+                  ?? "";
+    int Id = (int?)u.GetType().GetProperty("Id")?.GetValue(u) ?? 0;
+
+    // Rol (soporta nav "Rol" con campo "NombreRol"/"Nombre")
+    var rolObj = u.GetType().GetProperty("Rol")?.GetValue(u);
+    string Rol = "";
+    if (rolObj != null)
+    {
+        Rol = rolObj.GetType().GetProperty("NombreRol")?.GetValue(rolObj)?.ToString()
+           ?? rolObj.GetType().GetProperty("Nombre")?.GetValue(rolObj)?.ToString()
+           ?? "";
+    }
+<tr>
+  <td>@Nombre</td>
+  <td>@Usuario</td>
+  <td>@Correo</td>
+  <td>@Rol</td>
+  <td class="text-end">
+    <div class="btn-group">
+      <a asp-action="Edit" asp-route-id="@Id" class="btn btn-sm btn-outline-primary">Editar</a>
+      <form asp-action="Delete" method="post" class="ms-2" onsubmit="return confirm('¿Eliminar este usuario?');">
+        <input type="hidden" name="id" value="@Id" />
+        <button class="btn btn-sm btn-outline-danger">Eliminar</button>
+      </form>
+    </div>
+  </td>
+</tr>
+}
+      </tbody>
+    </table>
+  </div>
+</div>

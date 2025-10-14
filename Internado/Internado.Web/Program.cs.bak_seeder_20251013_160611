@@ -1,0 +1,127 @@
+﻿using Internado.Infrastructure.Data;
+using Internado.Infrastructure.Security;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpContextAccessor();
+
+// Serilog
+builder.Host.UseSerilog((ctx, lc) => lc.ReadFrom.Configuration(ctx.Configuration));
+
+// EF Core (DbContext hacia InternadoDB)
+builder.Services.AddDbContext<InternadoDbContext>(opt =>
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// DI: Password Hasher (BCrypt)
+builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+
+// AutenticaciÃ³n por cookies (seguro para app interna)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // En prod con HTTPS: Always
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(
+            builder.Configuration.GetValue<int>("Security:CookieExpireMinutes", 30));
+    });
+
+// AutorizaciÃ³n por roles (polÃ­ticas)
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", p => p.RequireRole("Administrador"));
+    options.AddPolicy("Docente",   p => p.RequireRole("Docente","Administrador"));
+    options.AddPolicy("Medico",    p => p.RequireRole("Medico","Administrador"));
+    options.AddPolicy("Direccion", p => p.RequireRole("Direccion","Administrador"));
+});
+
+// MVC + Swagger
+builder.Services.AddControllersWithViews();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var db = services.GetRequiredService<InternadoDbContext>();
+    var hasher = services.GetRequiredService<IPasswordHasher>();
+
+    // ¿Existe ya "admin"?
+    var adminExists = db.Usuarios.Any(u =>
+        EF.Property<string>(u, "Usuario") == "admin" ||
+        EF.Property<string>(u, "Usuario1") == "admin" ||
+        EF.Property<string>(u, "Login") == "admin");
+
+    // Rol Admin (si existe)
+    var rolAdmin = db.Roles.FirstOrDefault(r =>
+        EF.Property<string>(r, "NombreRol") == "Admin" ||
+        EF.Property<string>(r, "Nombre") == "Admin");
+
+    if (!adminExists)
+    {
+        var entityType = db.GetType().GetProperty("Usuarios")!
+           .PropertyType.GenericTypeArguments[0];
+        var admin = Activator.CreateInstance(entityType)!;
+
+        entityType.GetProperty("Nombre")?.SetValue(admin, "Administrador del sistema");
+        entityType.GetProperty("Correo")?.SetValue(admin, "admin@internado.local");
+        entityType.GetProperty("Estado")?.SetValue(admin, true);
+        if (entityType.GetProperty("Usuario") != null)
+            entityType.GetProperty("Usuario")?.SetValue(admin, "admin");
+        else if (entityType.GetProperty("Usuario1") != null)
+            entityType.GetProperty("Usuario1")?.SetValue(admin, "admin");
+        else if (entityType.GetProperty("Login") != null)
+            entityType.GetProperty("Login")?.SetValue(admin, "admin");
+
+        if (rolAdmin != null && entityType.GetProperty("RolId") != null)
+            entityType.GetProperty("RolId")?.SetValue(admin, EF.Property<int>(rolAdmin, "Id"));
+
+        var hash = hasher.HashToBase64("Admin123");
+        var pHash = entityType.GetProperty("HashContrasena");
+        if (pHash != null)
+        {
+            if (pHash.PropertyType == typeof(byte[]))
+                pHash.SetValue(admin, Convert.FromBase64String(hash));
+            else
+                pHash.SetValue(admin, hash);
+        }
+
+        db.Add(admin);
+        db.SaveChanges();
+        Console.WriteLine("✅ Usuario admin creado (Usuario: admin / Contraseña: Admin123)");
+    }
+}
+// Pipeline
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
+
+app.UseSerilogRequestLogging();
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// Ruta por defecto
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.Run();
+
