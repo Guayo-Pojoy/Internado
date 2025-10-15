@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Internado.Infrastructure.Models
 {
+    [Table("Residentes", Schema = "aca")]
     public partial class Residente
     {
         public int Id { get; set; }
@@ -22,15 +24,18 @@ namespace Internado.Infrastructure.Models
 
         [DataType(DataType.Date)]
         [Display(Name = "Fecha de nacimiento")]
-        public DateTime? FechaNacimiento { get; set; }
+        public DateOnly FechaNacimiento { get; set; }
 
         [DataType(DataType.Date)]
         [Display(Name = "Fecha de ingreso")]
-        public DateTime? FechaIngreso { get; set; }
+        public DateOnly FechaIngreso { get; set; }
 
         [DataType(DataType.Date)]
         [Display(Name = "Fecha de egreso")]
-        public DateTime? FechaEgreso { get; set; }
+        public DateOnly? FechaEgreso { get; set; }
+
+        [Display(Name = "Habitación")]
+        public int? HabitacionId { get; set; }
 
         // ===== Navegación esperada por el DbContext =====
         public virtual ICollection<Asistencium> Asistencia { get; set; } = new List<Asistencium>();
@@ -38,5 +43,6 @@ namespace Internado.Infrastructure.Models
         public virtual ICollection<Consulta> Consulta { get; set; } = new List<Consulta>();
         public virtual ICollection<HistorialAcademico> HistorialAcademicos { get; set; } = new List<HistorialAcademico>();
         public virtual ICollection<HistorialMedico> HistorialMedicos { get; set; } = new List<HistorialMedico>();
+        public virtual Habitacion? Habitacion { get; set; }
     }
 }

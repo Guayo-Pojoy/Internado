@@ -1,15 +1,154 @@
 ﻿@model Internado.Infrastructure.Models.Residente
 @{
-    ViewData["Title"] = "Eliminar residente";
+    ViewData["Title"] = "Eliminar Residente";
 }
-<h1 class="mb-3">Eliminar</h1>
 
-<div class="alert alert-warning">
-    ¿Confirmas eliminar al residente <strong>@Model.NombreCompleto</strong>?
+<div class="row">
+    <div class="col-lg-8 offset-lg-2">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index"><i class="bi bi-house"></i> Residentes</a></li>
+                <li class="breadcrumb-item active">Eliminar: @Model.NombreCompleto</li>
+            </ol>
+        </nav>
+
+        <div class="card border-danger shadow">
+            <div class="card-header bg-danger text-white py-3">
+                <h4 class="mb-0">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-warning border-warning mb-4">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-exclamation-triangle-fill fs-1"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="alert-heading">¡Atención!</h5>
+                            <p class="mb-0">
+                                Está a punto de eliminar permanentemente el registro del residente.
+                                <strong>Esta acción no se puede deshacer.</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border rounded p-4 mb-4" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <h5 class="mb-3">Información del residente a eliminar:</h5>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold mb-1">
+                                <i class="bi bi-person me-1"></i>NOMBRE COMPLETO
+                            </label>
+                            <p class="h5 mb-0">@Model.NombreCompleto</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold mb-1">
+                                <i class="bi bi-card-text me-1"></i>DPI
+                            </label>
+                            <p class="h5 mb-0"><code class="bg-white px-3 py-2 rounded">@Model.DPI</code></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold mb-1">
+                                <i class="bi bi-person-badge me-1"></i>TUTOR
+                            </label>
+                            <p class="h6 mb-0">@Model.Tutor</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold mb-1">
+                                <i class="bi bi-shield-check me-1"></i>ESTADO
+                            </label>
+                            <div>
+                                @if (Model.Estado == "Activa")
+                                {
+                                    <span class="badge bg-success">Activa</span>
+                                }
+                                else if (Model.Estado == "Egresada")
+                                {
+                                    <span class="badge bg-info">Egresada</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">Suspendida</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="text-muted small fw-bold mb-1">
+                                <i class="bi bi-calendar me-1"></i>FECHA DE INGRESO
+                            </label>
+                            <p class="h6 mb-0">@($"{Model.FechaIngreso:dd/MM/yyyy}")</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form asp-action="Delete" method="post" id="deleteForm">
+                    <input type="hidden" asp-for="Id" />
+                    
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                        <label class="form-check-label" for="confirmDelete">
+                            Confirmo que deseo eliminar este registro de forma permanente
+                        </label>
+                    </div>
+
+                    <div class="d-flex gap-2 justify-content-end pt-3 border-top">
+                        <a asp-action="Index" class="btn btn-secondary btn-lg px-4">
+                            <i class="bi bi-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-info btn-lg px-4">
+                            <i class="bi bi-eye me-2"></i>Ver Detalles
+                        </a>
+                        <button type="submit" class="btn btn-danger btn-lg px-5" id="btnDelete" disabled>
+                            <i class="bi bi-trash me-2"></i>Eliminar Definitivamente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
-<form asp-action="Delete">
-    <input type="hidden" asp-for="Id" />
-    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
-</form>
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const confirmCheck = document.getElementById('confirmDelete');
+            const btnDelete = document.getElementById('btnDelete');
+            const deleteForm = document.getElementById('deleteForm');
+
+            // Habilitar botón solo si confirma
+            confirmCheck.addEventListener('change', function() {
+                btnDelete.disabled = !this.checked;
+                
+                if (this.checked) {
+                    btnDelete.classList.add('pulse');
+                    setTimeout(() => btnDelete.classList.remove('pulse'), 500);
+                }
+            });
+
+            // Confirmación adicional al enviar
+            deleteForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (confirm('¿Está ABSOLUTAMENTE seguro? Esta es su última oportunidad para cancelar.')) {
+                    btnDelete.disabled = true;
+                    btnDelete.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...';
+                    this.submit();
+                }
+            });
+        });
+    </script>
+    <style>
+        @@keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .pulse {
+            animation: pulse 0.5s ease;
+        }
+    </style>
+}

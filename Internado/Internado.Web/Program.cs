@@ -1,4 +1,5 @@
-﻿using Internado.Infrastructure.Data;
+using Internado.Application.Services;
+using Internado.Infrastructure.Data;
 using Internado.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +18,10 @@ builder.Services.AddDbContext<InternadoDbContext>(opt =>
 // DI: Password Hasher (BCrypt)
 builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 
-// AutenticaciÃ³n por cookies (seguro para app interna)
+// DI: Servicios de aplicación
+builder.Services.AddScoped<IResidenteService, ResidenteService>();
+
+// Autenticación por cookies (seguro para app interna)
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -30,7 +34,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
             builder.Configuration.GetValue<int>("Security:CookieExpireMinutes", 30));
     });
 
-// AutorizaciÃ³n por roles (polÃ­ticas)
+// Autorización por roles (políticas)
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", p => p.RequireRole("Administrador"));
@@ -45,6 +49,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -68,7 +74,7 @@ using (var scope = app.Services.CreateScope())
     var adminExists = usuarios.Any(u => userNames.Any(n => string.Equals(GetStringProp(u, n), "admin", StringComparison.OrdinalIgnoreCase)));
 
     var roles = db.Roles.AsNoTracking().ToList();
-    var rolAdmin = roles.FirstOrDefault(r => roleNames.Any(n => string.Equals(GetStringProp(r, n), "Admin", StringComparison.OrdinalIgnoreCase)));
+    var rolAdmin = roles.FirstOrDefault(r => roleNames.Any(n => string.Equals(GetStringProp(r, n), "Administrador", StringComparison.OrdinalIgnoreCase)));
 
     if (!adminExists)
     {
@@ -119,6 +125,7 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("✅ Usuario admin creado (Usuario: admin / Contraseña: Admin123)");
     }
 }
+
 // Pipeline
 if (!app.Environment.IsDevelopment())
 {
@@ -145,5 +152,3 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
-
-

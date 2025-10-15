@@ -23,15 +23,18 @@ public partial class InternadoDbContext : DbContext
     public virtual DbSet<MovimientosMedicamento> MovimientosMedicamentos { get; set; }
     public virtual DbSet<Periodo> Periodos { get; set; }
     public virtual DbSet<Residente> Residentes { get; set; }
+    public virtual DbSet<Habitacion> Habitaciones { get; set; }
     public virtual DbSet<Role> Roles { get; set; }
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public virtual DbSet<vw_Indicadore> vw_Indicadores { get; set; }
     public virtual DbSet<vw_ReportesGenerale> vw_ReportesGenerales { get; set; }
+     
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Si tienes IEntityTypeConfiguration<> en el proyecto, se aplicarán aquí:
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(InternadoDbContext).Assembly);
+       
 
         modelBuilder.Entity<Asistencium>(entity =>
         {
@@ -118,33 +121,7 @@ public partial class InternadoDbContext : DbContext
             entity.Property(e => e.ResidenteId).ValueGeneratedOnAdd();
         });
 
-        // === Configuración específica de RESIDENTE ===
-        modelBuilder.Entity<Residente>(entity =>
-        {
-            // Si tu tabla está en otro esquema, descomenta y ajusta:
-            // entity.ToTable("Residentes", "dbo");
-
-            entity.Property(e => e.NombreCompleto)
-                  .HasMaxLength(120)
-                  .IsRequired();
-
-            entity.Property(e => e.DPI)
-                  .HasMaxLength(20)
-                  .IsRequired();
-
-            entity.Property(e => e.Tutor)
-                  .HasMaxLength(120)
-                  .IsRequired();
-
-            entity.Property(e => e.Estado)
-                  .HasMaxLength(20)
-                  .IsRequired();
-
-            // Solo fecha (sin hora) en SQL Server
-            entity.Property(e => e.FechaNacimiento).HasColumnType("date");
-            entity.Property(e => e.FechaIngreso).HasColumnType("date");
-            entity.Property(e => e.FechaEgreso).HasColumnType("date");
-        });
+        // === Configuración de RESIDENTE usando ResidenteConfiguration ===
 
         OnModelCreatingPartial(modelBuilder);
     }

@@ -1,0 +1,426 @@
+@using Internado.Infrastructure.Models
+@{
+    ViewData["Title"] = "Dashboard";
+    var stats = ViewBag.Estadisticas as Dictionary<string, int> ?? new Dictionary<string, int>();
+    var ingresosPorMes = ViewBag.IngresosPorMes as System.Collections.IEnumerable;
+    var rangoEdades = ViewBag.RangoEdades;
+    var residentesRecientes = ViewBag.ResidentesRecientes as List<Residente> ?? new List<Residente>();
+    var totalResidentes = ViewBag.TotalResidentes ?? 0;
+    var promedioEdad = ViewBag.PromedioEdad ?? 0;
+}
+
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5 fw-bold mb-2">
+            <i class="bi bi-speedometer2 text-primary"></i> Dashboard
+        </h1>
+        <p class="text-muted fs-5">Panel de control y estadísticas del sistema</p>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-outline-primary" onclick="location.reload()">
+            <i class="bi bi-arrow-clockwise"></i> Actualizar
+        </button>
+    </div>
+</div>
+
+<!-- Tarjetas de estadísticas principales -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stats-card" style="--card-color-start: #667eea; --card-color-end: #764ba2;">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5 class="text-uppercase mb-1">Total Residentes</h5>
+                    <h2 class="mb-0 counter" data-target="@(stats.ContainsKey("Total") ? stats["Total"] : 0)">0</h2>
+                    <small class="opacity-75">Registrados en el sistema</small>
+                </div>
+                <div class="fs-1 opacity-50">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card" style="--card-color-start: #11998e; --card-color-end: #38ef7d;">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5 class="text-uppercase mb-1">Activas</h5>
+                    <h2 class="mb-0 counter" data-target="@(stats.ContainsKey("Activas") ? stats["Activas"] : 0)">0</h2>
+                    <small class="opacity-75">
+                        @if (stats.ContainsKey("Total") && stats["Total"] > 0)
+                        {
+                            @Math.Round((double)stats["Activas"] / stats["Total"] * 100, 1)<text>% del total</text>
+                        }
+                        else
+                        {
+                            <text>0% del total</text>
+                        }
+                    </small>
+                </div>
+                <div class="fs-1 opacity-50">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card" style="--card-color-start: #00b4db; --card-color-end: #0083b0;">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5 class="text-uppercase mb-1">Egresadas</h5>
+                    <h2 class="mb-0 counter" data-target="@(stats.ContainsKey("Egresadas") ? stats["Egresadas"] : 0)">0</h2>
+                    <small class="opacity-75">Han completado su estadía</small>
+                </div>
+                <div class="fs-1 opacity-50">
+                    <i class="bi bi-door-open"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card" style="--card-color-start: #f093fb; --card-color-end: #f5576c;">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5 class="text-uppercase mb-1">Edad Promedio</h5>
+                    <h2 class="mb-0 counter" data-target="@promedioEdad">0</h2>
+                    <small class="opacity-75">Años</small>
+                </div>
+                <div class="fs-1 opacity-50">
+                    <i class="bi bi-calendar-heart"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos principales -->
+<div class="row g-4 mb-4">
+    <!-- Gráfico de estados -->
+    <div class="col-lg-4">
+        <div class="card border-0 h-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-pie-chart-fill text-primary me-2"></i>Distribución por Estado
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartEstados" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de ingresos por mes -->
+    <div class="col-lg-8">
+        <div class="card border-0 h-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart-fill text-success me-2"></i>Ingresos por Mes (Últimos 6 meses)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartIngresos" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos secundarios -->
+<div class="row g-4 mb-4">
+    <!-- Gráfico de edades -->
+    <div class="col-lg-6">
+        <div class="card border-0 h-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-people-fill text-info me-2"></i>Distribución por Rango de Edad
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartEdades" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Residentes recientes -->
+    <div class="col-lg-6">
+        <div class="card border-0 h-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history text-warning me-2"></i>Ingresos Recientes
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (residentesRecientes != null && residentesRecientes.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var residente in residentesRecientes)
+                        {
+                            <div class="list-group-item border-0 px-0">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">@residente.NombreCompleto</h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar3 me-1"></i>
+                                            @($"{residente.FechaIngreso:dd/MM/yyyy}")
+                                        </small>
+                                    </div>
+                                    <div>
+                                        @if (residente.Estado == "Activa")
+                                        {
+                                            <span class="badge bg-success">Activa</span>
+                                        }
+                                        else if (residente.Estado == "Egresada")
+                                        {
+                                            <span class="badge bg-info">Egresada</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">Suspendida</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-1"></i>
+                        <p class="mt-2 mb-0">No hay registros recientes</p>
+                    </div>
+                }
+            </div>
+            <div class="card-footer bg-white border-top">
+                <a asp-controller="Residentes" asp-action="Index" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-arrow-right-circle me-2"></i>Ver todos los residentes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card border-0 text-center p-4 h-100 quick-action-card">
+            <div class="mb-3">
+                <i class="bi bi-person-plus-fill display-4 text-success"></i>
+            </div>
+            <h5>Nuevo Residente</h5>
+            <p class="text-muted mb-3">Registrar un nuevo residente en el sistema</p>
+            <a asp-controller="Residentes" asp-action="Create" class="btn btn-success">
+                <i class="bi bi-plus-circle me-2"></i>Agregar Residente
+            </a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 text-center p-4 h-100 quick-action-card">
+            <div class="mb-3">
+                <i class="bi bi-search display-4 text-primary"></i>
+            </div>
+            <h5>Buscar Residente</h5>
+            <p class="text-muted mb-3">Consultar información de residentes</p>
+            <a asp-controller="Residentes" asp-action="Index" class="btn btn-primary">
+                <i class="bi bi-search me-2"></i>Ir a Búsqueda
+            </a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 text-center p-4 h-100 quick-action-card">
+            <div class="mb-3">
+                <i class="bi bi-file-earmark-excel display-4 text-info"></i>
+            </div>
+            <h5>Exportar Datos</h5>
+            <p class="text-muted mb-3">Descargar reporte en formato Excel</p>
+            <a asp-controller="Residentes" asp-action="Index" class="btn btn-info">
+                <i class="bi bi-download me-2"></i>Exportar Excel
+            </a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Datos del servidor
+            var statsData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(stats));
+            var ingresosMeses = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(ViewBag.IngresosPorMes ?? new List<object>()));
+            var rangoEdades = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(rangoEdades ?? new { Menores15 = 0, Entre15y17 = 0, Mayores17 = 0 }));
+
+            // Animación de contadores
+            const counters = document.querySelectorAll('.counter');
+            counters.forEach(counter => {
+                const target = parseFloat(counter.dataset.target);
+                const duration = 2000;
+                const increment = target / (duration / 16);
+                let current = 0;
+
+                const updateCounter = () => {
+                    current += increment;
+                    if (current < target) {
+                        counter.textContent = Math.floor(current);
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        counter.textContent = target % 1 === 0 ? target : target.toFixed(1);
+                    }
+                };
+                updateCounter();
+            });
+
+            // Gráfico de Estados (Dona)
+            const ctxEstados = document.getElementById('chartEstados').getContext('2d');
+            new Chart(ctxEstados, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Activas', 'Egresadas', 'Suspendidas'],
+                    datasets: [{
+                        data: [
+                            statsData.Activas || 0,
+                            statsData.Egresadas || 0,
+                            statsData.Suspendidas || 0
+                        ],
+                        backgroundColor: [
+                            'rgba(17, 153, 142, 0.8)',
+                            'rgba(0, 180, 219, 0.8)',
+                            'rgba(242, 153, 74, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(17, 153, 142)',
+                            'rgb(0, 180, 219)',
+                            'rgb(242, 153, 74)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    family: "'Segoe UI', sans-serif"
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    if (total === 0) return context.label + ': 0 (0%)';
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de Ingresos por Mes (Barras)
+            const meses = ingresosMeses.map(x => x.Mes);
+            const cantidades = ingresosMeses.map(x => x.Cantidad);
+
+            const ctxIngresos = document.getElementById('chartIngresos').getContext('2d');
+            new Chart(ctxIngresos, {
+                type: 'bar',
+                data: {
+                    labels: meses,
+                    datasets: [{
+                        label: 'Ingresos',
+                        data: cantidades,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgb(102, 126, 234)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de Edades (Barras horizontales)
+            const ctxEdades = document.getElementById('chartEdades').getContext('2d');
+            new Chart(ctxEdades, {
+                type: 'bar',
+                data: {
+                    labels: ['Menores de 15', '15-17 años', 'Mayores de 17'],
+                    datasets: [{
+                        label: 'Residentes',
+                        data: [rangoEdades.Menores15, rangoEdades.Entre15y17, rangoEdades.Mayores17],
+                        backgroundColor: [
+                            'rgba(255, 193, 7, 0.8)',
+                            'rgba(13, 110, 253, 0.8)',
+                            'rgba(220, 53, 69, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(255, 193, 7)',
+                            'rgb(13, 110, 253)',
+                            'rgb(220, 53, 69)'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Animación de hover en tarjetas de acción rápida
+            document.querySelectorAll('.quick-action-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-10px)';
+                    this.style.boxShadow = '0 12px 24px rgba(0,0,0,0.15)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+    <style>
+        .quick-action-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+    </style>
+}

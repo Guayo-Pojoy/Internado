@@ -1,39 +1,457 @@
 ﻿@model IEnumerable<Internado.Infrastructure.Models.Residente>
 @{
-    ViewData["Title"] = "Residentes";
+    ViewData["Title"] = "Gestión de Residentes";
 }
-<h1 class="mb-3">Residentes</h1>
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Nuevo residente</a>
-</p>
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-5 fw-bold mb-2">
+            <i class="bi bi-people-fill text-primary"></i> Gestión de Residentes
+        </h1>
+        <p class="text-muted fs-5">Administra la información de los residentes del internado educativo</p>
+    </div>
+</div>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Id</th>
-            <th>NombreCompleto</th>
-            <th>DPI</th>
-            <th>Tutor</th>
-            <th>Estado</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var r in Model)
+<!-- Toast Container para notificaciones -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="toast show" role="alert" data-bs-autohide="true" data-bs-delay="5000">
+            <div class="toast-header bg-success text-white">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <strong class="me-auto">¡Éxito!</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                @TempData["SuccessMessage"]
+            </div>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="toast show" role="alert" data-bs-autohide="true" data-bs-delay="5000">
+            <div class="toast-header bg-danger text-white">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                @TempData["ErrorMessage"]
+            </div>
+        </div>
+    }
+</div>
+
+@if (ViewBag.Estadisticas != null)
 {
-        <tr>
-            <td>@r.Id</td>
-            <td>@r.NombreCompleto</td>
-            <td>@r.DPI</td>
-            <td>@r.Tutor</td>
-            <td>@r.Estado</td>
-            <td class="text-nowrap">
-                <a asp-action="Details" asp-route-id="@r.Id">Detalles</a> |
-                <a asp-action="Edit" asp-route-id="@r.Id">Editar</a> |
-                <a asp-action="Delete" asp-route-id="@r.Id">Eliminar</a>
-            </td>
-        </tr>
+    var stats = ViewBag.Estadisticas as Dictionary<string, int>;
+    if (stats != null)
+    {
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stats-card" style="--card-color-start: #667eea; --card-color-end: #764ba2;">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="text-uppercase mb-1">Total</h5>
+                            <h2 class="mb-0" id="stat-total">@stats["Total"]</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-people"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card" style="--card-color-start: #11998e; --card-color-end: #38ef7d;" data-filter="Activa">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="text-uppercase mb-1">Activas</h5>
+                            <h2 class="mb-0" id="stat-activas">@stats["Activas"]</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card" style="--card-color-start: #00b4db; --card-color-end: #0083b0;" data-filter="Egresada">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="text-uppercase mb-1">Egresadas</h5>
+                            <h2 class="mb-0" id="stat-egresadas">@stats["Egresadas"]</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-door-open"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card" style="--card-color-start: #f2994a; --card-color-end: #f2c94c;" data-filter="Suspendida">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h5 class="text-uppercase mb-1">Suspendidas</h5>
+                            <h2 class="mb-0" id="stat-suspendidas">@stats["Suspendidas"]</h2>
+                        </div>
+                        <div class="fs-1 opacity-50">
+                            <i class="bi bi-pause-circle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 }
-    </tbody>
-</table>
+
+<div class="card mb-4 border-0">
+    <div class="card-body p-4">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-6">
+                <div class="input-group input-group-lg">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" 
+                           id="searchInput"
+                           class="form-control border-start-0 ps-0" 
+                           placeholder="Buscar en tiempo real por nombre o DPI..." 
+                           value="@ViewBag.SearchTerm"
+                           autofocus>
+                    <button type="button" id="clearSearch" class="btn btn-outline-secondary" style="display: none;">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+                <small class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <span id="resultCount">@Model.Count()</span> resultados encontrados
+                </small>
+            </div>
+            <div class="col-lg-3">
+                <select id="filterEstado" class="form-select form-select-lg">
+                    <option value="">📊 Todos los estados</option>
+                    <option value="Activa">✓ Activas</option>
+                    <option value="Egresada">→ Egresadas</option>
+                    <option value="Suspendida">⏸ Suspendidas</option>
+                </select>
+            </div>
+            <div class="col-lg-3 text-end">
+                <div class="btn-group w-100" role="group">
+                    <button type="button" id="exportExcel" class="btn btn-outline-success" title="Exportar a Excel">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </button>
+                    <a asp-action="Create" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i> Nuevo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0">
+    <div class="card-body p-0">
+        <div id="tableContainer">
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="residentesTable">
+                        <thead>
+                            <tr>
+                                <th><i class="bi bi-person me-2"></i>Nombre</th>
+                                <th><i class="bi bi-card-text me-2"></i>DPI</th>
+                                <th><i class="bi bi-person-check me-2"></i>Tutor</th>
+                                <th><i class="bi bi-shield-check me-2"></i>Estado</th>
+                                <th><i class="bi bi-calendar me-2"></i>F. Ingreso</th>
+                                <th class="text-center"><i class="bi bi-gear me-2"></i>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            @foreach (var item in Model)
+                            {
+                                <tr data-estado="@item.Estado" data-nombre="@item.NombreCompleto.ToLower()" data-dpi="@item.DPI">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person-fill"></i>
+                                            </div>
+                                            <strong>@item.NombreCompleto</strong>
+                                        </div>
+                                    </td>
+                                    <td><code class="bg-light px-2 py-1 rounded">@item.DPI</code></td>
+                                    <td>@item.Tutor</td>
+                                    <td>
+                                        @if (item.Estado == "Activa")
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Activa
+                                            </span>
+                                        }
+                                        else if (item.Estado == "Egresada")
+                                        {
+                                            <span class="badge bg-info">
+                                                <i class="bi bi-door-open me-1"></i>Egresada
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">
+                                                <i class="bi bi-pause-circle me-1"></i>Suspendida
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <i class="bi bi-calendar3 text-muted me-1"></i>
+                                        @($"{item.FechaIngreso:dd/MM/yyyy}")
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Details" 
+                                               asp-route-id="@item.Id" 
+                                               class="btn btn-sm btn-info" 
+                                               title="Ver"
+                                               data-bs-toggle="tooltip">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a asp-action="Edit" 
+                                               asp-route-id="@item.Id" 
+                                               class="btn btn-sm btn-warning" 
+                                               title="Editar"
+                                               data-bs-toggle="tooltip">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a asp-action="Delete" 
+                                               asp-route-id="@item.Id" 
+                                               class="btn btn-sm btn-danger" 
+                                               title="Eliminar"
+                                               data-bs-toggle="tooltip">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5" id="emptyState">
+                    <div class="mb-4">
+                        <i class="bi bi-inbox display-1 text-muted"></i>
+                    </div>
+                    <h4 class="text-muted mb-2">No se encontraron residentes</h4>
+                    <p class="text-muted mb-4">Comienza agregando tu primer residente</p>
+                    <a asp-action="Create" class="btn btn-primary btn-lg">
+                        <i class="bi bi-plus-circle me-2"></i>Crear Primer Residente
+                    </a>
+                </div>
+            }
+        </div>
+
+        <div id="noResults" class="text-center py-5" style="display: none;">
+            <div class="mb-4">
+                <i class="bi bi-search display-1 text-muted"></i>
+            </div>
+            <h4 class="text-muted mb-2">No se encontraron resultados</h4>
+            <p class="text-muted">Intenta con otros términos de búsqueda</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (el) {
+                return new bootstrap.Tooltip(el);
+            });
+
+            // Inicializar toasts
+            var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+            toastElList.map(function(el) {
+                return new bootstrap.Toast(el);
+            });
+
+            const searchInput = document.getElementById('searchInput');
+            const clearSearch = document.getElementById('clearSearch');
+            const filterEstado = document.getElementById('filterEstado');
+            const tableBody = document.getElementById('tableBody');
+            const resultCount = document.getElementById('resultCount');
+            const noResults = document.getElementById('noResults');
+            const exportBtn = document.getElementById('exportExcel');
+
+            // Búsqueda en tiempo real
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(filterTable, 300);
+                
+                clearSearch.style.display = this.value ? 'block' : 'none';
+            });
+
+            // Limpiar búsqueda
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                clearSearch.style.display = 'none';
+                filterTable();
+                searchInput.focus();
+            });
+
+            // Filtro por estado
+            filterEstado.addEventListener('change', filterTable);
+
+            // Filtrar tabla
+            function filterTable() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const estadoFilter = filterEstado.value;
+                const rows = tableBody.querySelectorAll('tr');
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const nombre = row.dataset.nombre;
+                    const dpi = row.dataset.dpi;
+                    const estado = row.dataset.estado;
+
+                    const matchSearch = nombre.includes(searchTerm) || dpi.includes(searchTerm);
+                    const matchEstado = !estadoFilter || estado === estadoFilter;
+
+                    if (matchSearch && matchEstado) {
+                        row.style.display = '';
+                        visibleCount++;
+                        // Animación de entrada
+                        row.style.animation = 'fadeIn 0.3s ease';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                resultCount.textContent = visibleCount;
+                noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+                document.querySelector('.table-responsive').style.display = visibleCount === 0 ? 'none' : 'block';
+
+                // Actualizar stats visuales
+                updateStats();
+            }
+
+            // Actualizar estadísticas visuales
+            function updateStats() {
+                const rows = Array.from(tableBody.querySelectorAll('tr')).filter(r => r.style.display !== 'none');
+                const activas = rows.filter(r => r.dataset.estado === 'Activa').length;
+                const egresadas = rows.filter(r => r.dataset.estado === 'Egresada').length;
+                const suspendidas = rows.filter(r => r.dataset.estado === 'Suspendida').length;
+
+                document.getElementById('stat-total').textContent = rows.length;
+                document.getElementById('stat-activas').textContent = activas;
+                document.getElementById('stat-egresadas').textContent = egresadas;
+                document.getElementById('stat-suspendidas').textContent = suspendidas;
+            }
+
+            // Click en tarjetas de estadísticas para filtrar
+            document.querySelectorAll('.stats-card[data-filter]').forEach(card => {
+                card.style.cursor = 'pointer';
+                card.addEventListener('click', function() {
+                    const filter = this.dataset.filter;
+                    filterEstado.value = filter;
+                    filterTable();
+                    
+                    // Feedback visual
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 200);
+                });
+            });
+
+            // Exportar a Excel
+            exportBtn.addEventListener('click', function() {
+                const rows = Array.from(tableBody.querySelectorAll('tr')).filter(r => r.style.display !== 'none');
+                const data = [];
+
+                // Headers
+                data.push(['Nombre Completo', 'DPI', 'Tutor', 'Estado', 'Fecha Ingreso']);
+
+                // Datos
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    data.push([
+                        cells[0].textContent.trim(),
+                        cells[1].textContent.trim(),
+                        cells[2].textContent.trim(),
+                        cells[3].textContent.trim(),
+                        cells[4].textContent.trim()
+                    ]);
+                });
+
+                // Crear workbook
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                
+                // Estilos de columnas
+                ws['!cols'] = [
+                    { wch: 30 }, // Nombre
+                    { wch: 15 }, // DPI
+                    { wch: 25 }, // Tutor
+                    { wch: 12 }, // Estado
+                    { wch: 15 }  // Fecha
+                ];
+
+                XLSX.utils.book_append_sheet(wb, ws, 'Residentes');
+                
+                // Descargar
+                const fecha = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `Residentes_${fecha}.xlsx`);
+
+                // Toast de éxito
+                showToast('Archivo exportado exitosamente', 'success');
+            });
+
+            // Función para mostrar toast
+            function showToast(message, type = 'success') {
+                const toastContainer = document.querySelector('.toast-container');
+                const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+                const icon = type === 'success' ? 'check-circle-fill' : 'exclamation-triangle-fill';
+                
+                const toastHtml = `
+                    <div class="toast show" role="alert">
+                        <div class="toast-header ${bgClass} text-white">
+                            <i class="bi bi-${icon} me-2"></i>
+                            <strong class="me-auto">${type === 'success' ? '¡Éxito!' : 'Error'}</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                        </div>
+                        <div class="toast-body">${message}</div>
+                    </div>
+                `;
+                
+                toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                const newToast = toastContainer.lastElementChild;
+                const bsToast = new bootstrap.Toast(newToast, { delay: 3000 });
+                bsToast.show();
+                
+                newToast.addEventListener('hidden.bs.toast', function() {
+                    this.remove();
+                });
+            }
+
+            // Atajos de teclado
+            document.addEventListener('keydown', function(e) {
+                // Ctrl/Cmd + K para enfocar búsqueda
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    searchInput.focus();
+                    searchInput.select();
+                }
+                
+                // ESC para limpiar búsqueda
+                if (e.key === 'Escape' && searchInput.value) {
+                    searchInput.value = '';
+                    clearSearch.style.display = 'none';
+                    filterTable();
+                }
+            });
+        });
+    </script>
+}

@@ -1,43 +1,47 @@
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using Internado.Infrastructure.Data;
+﻿using Internado.Application.Services;
 using Internado.Infrastructure.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Threading.Tasks;
 
 namespace Internado.Web.Controllers
 {
+    /// <summary>
+    /// Controlador para gestión de Residentes del internado
+    /// </summary>
+    [Authorize]
     public class ResidentesController : Controller
     {
-        private readonly InternadoDbContext _context;
+        private readonly IResidenteService _residenteService;
 
-        public ResidentesController(InternadoDbContext context)
+        public ResidentesController(IResidenteService residenteService)
         {
-            _context = context;
+            _residenteService = residenteService ?? throw new ArgumentNullException(nameof(residenteService));
         }
 
         // GET: Residentes
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchTerm)
         {
-            var data = await _context.Residentes
-                .AsNoTracking()
-                .OrderBy(r => r.Id)
-                .ToListAsync();
+            var residentes = string.IsNullOrWhiteSpace(searchTerm)
+                ? await _residenteService.ObtenerTodosAsync()
+                : await _residenteService.BuscarAsync(searchTerm);
 
-            return View(data);
+            ViewBag.SearchTerm = searchTerm;
+            ViewBag.Estadisticas = await _residenteService.ObtenerEstadisticasAsync();
+
+            return View(residentes);
         }
 
         // GET: Residentes/Details/5
         public async Task<IActionResult> Details(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+                return NotFound();
 
-            var residente = await _context.Residentes
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (residente == null) return NotFound();
+            var residente = await _residenteService.ObtenerPorIdAsync(id.Value);
+            if (residente == null)
+                return NotFound();
 
             return View(residente);
         }
@@ -45,74 +49,100 @@ namespace Internado.Web.Controllers
         // GET: Residentes/Create
         public IActionResult Create()
         {
-            ViewBag.Estados = EstadosSelectList();
-            return View(new Residente());
+            return View(new Residente { FechaIngreso = DateOnly.FromDateTime(DateTime.Today) });
         }
 
         // POST: Residentes/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("NombreCompleto,DPI,Tutor,FechaNacimiento,FechaIngreso,FechaEgreso,Estado")] Residente residente)
+        public async Task<IActionResult> Create([Bind("NombreCompleto,FechaNacimiento,DPI,Tutor,Estado,FechaIngreso,FechaEgreso")] Residente residente)
         {
-            if (ModelState.IsValid)
+            // Validación de negocio adicional
+            if (residente.FechaEgreso.HasValue && residente.FechaEgreso < residente.FechaIngreso)
             {
-                _context.Add(residente);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                ModelState.AddModelError("FechaEgreso", "La fecha de egreso no puede ser anterior a la fecha de ingreso");
             }
 
-            ViewBag.Estados = EstadosSelectList(residente.Estado);
+            if (await _residenteService.ExisteDPIAsync(residente.DPI))
+            {
+                ModelState.AddModelError("DPI", "Ya existe un residente con este DPI");
+            }
+
+            if (ModelState.IsValid)
+            {
+                var resultado = await _residenteService.CrearAsync(residente);
+                if (resultado)
+                {
+                    TempData["SuccessMessage"] = $"Residente '{residente.NombreCompleto}' creado exitosamente";
+                    return RedirectToAction(nameof(Index));
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Error al crear el residente. Verifica que el DPI no esté duplicado";
+                }
+            }
+
             return View(residente);
         }
 
         // GET: Residentes/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+                return NotFound();
 
-            var residente = await _context.Residentes.FindAsync(id);
-            if (residente == null) return NotFound();
+            var residente = await _residenteService.ObtenerPorIdAsync(id.Value);
+            if (residente == null)
+                return NotFound();
 
-            ViewBag.Estados = EstadosSelectList(residente.Estado);
             return View(residente);
         }
 
         // POST: Residentes/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,NombreCompleto,DPI,Tutor,FechaNacimiento,FechaIngreso,FechaEgreso,Estado")] Residente residente)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,NombreCompleto,FechaNacimiento,DPI,Tutor,Estado,FechaIngreso,FechaEgreso")] Residente residente)
         {
-            if (id != residente.Id) return NotFound();
+            if (id != residente.Id)
+                return NotFound();
+
+            // Validaciones de negocio
+            if (residente.FechaEgreso.HasValue && residente.FechaEgreso < residente.FechaIngreso)
+            {
+                ModelState.AddModelError("FechaEgreso", "La fecha de egreso no puede ser anterior a la fecha de ingreso");
+            }
+
+            if (await _residenteService.ExisteDPIAsync(residente.DPI, residente.Id))
+            {
+                ModelState.AddModelError("DPI", "Ya existe otro residente con este DPI");
+            }
 
             if (ModelState.IsValid)
             {
-                try
+                var resultado = await _residenteService.ActualizarAsync(residente);
+                if (resultado)
                 {
-                    _context.Update(residente);
-                    await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = $"Residente '{residente.NombreCompleto}' actualizado exitosamente";
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                else
                 {
-                    if (!ResidenteExists(residente.Id)) return NotFound();
-                    throw;
+                    TempData["ErrorMessage"] = "Error al actualizar el residente";
                 }
-                return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.Estados = EstadosSelectList(residente.Estado);
             return View(residente);
         }
 
         // GET: Residentes/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null) return NotFound();
+            if (id == null)
+                return NotFound();
 
-            var residente = await _context.Residentes
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == id);
-
-            if (residente == null) return NotFound();
+            var residente = await _residenteService.ObtenerPorIdAsync(id.Value);
+            if (residente == null)
+                return NotFound();
 
             return View(residente);
         }
@@ -122,23 +152,17 @@ namespace Internado.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var residente = await _context.Residentes.FindAsync(id);
-            if (residente != null)
+            var resultado = await _residenteService.EliminarAsync(id);
+            if (resultado)
             {
-                _context.Residentes.Remove(residente);
-                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Residente eliminado exitosamente";
             }
+            else
+            {
+                TempData["ErrorMessage"] = "Error al eliminar el residente";
+            }
+
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool ResidenteExists(int id) =>
-            _context.Residentes.Any(e => e.Id == id);
-
-        private SelectList EstadosSelectList(string? selected = null)
-        {
-            var items = new[] { "Activa", "Egresada", "Suspendida" }
-                .Select(x => new SelectListItem(x, x));
-            return new SelectList(items, "Value", "Text", selected);
         }
     }
 }

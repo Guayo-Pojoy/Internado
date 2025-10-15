@@ -1,0 +1,117 @@
+﻿@model Internado.Infrastructure.Models.Habitacion
+@{
+    ViewData["Title"] = "Editar Habitacion";
+}
+
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a asp-action="Index"><i class="bi bi-house me-1"></i>Habitaciones</a>
+                    </li>
+                    <li class="breadcrumb-item active">Editar: @Model.Numero</li>
+                </ol>
+            </nav>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-pencil-square me-2"></i>Editar Habitacion
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                        <input type="hidden" asp-for="Id" />
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label asp-for="Numero" class="form-label fw-semibold">
+                                    <i class="bi bi-hash text-warning me-1"></i>Numero de Habitacion
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Numero" class="form-control" autofocus />
+                                <span asp-validation-for="Numero" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Capacidad" class="form-label fw-semibold">
+                                    <i class="bi bi-people text-warning me-1"></i>Capacidad
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Capacidad" class="form-control" 
+                                       type="number" min="1" max="10" />
+                                <span asp-validation-for="Capacidad" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label asp-for="Tipo" class="form-label fw-semibold">
+                                    <i class="bi bi-house-door text-warning me-1"></i>Tipo
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="Tipo" class="form-select" asp-items="ViewBag.Tipos">
+                                </select>
+                                <span asp-validation-for="Tipo" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Estado" class="form-label fw-semibold">
+                                    <i class="bi bi-shield-check text-warning me-1"></i>Estado
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="Estado" class="form-select" asp-items="ViewBag.Estados">
+                                </select>
+                                <span asp-validation-for="Estado" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <label asp-for="Piso" class="form-label fw-semibold">
+                                    <i class="bi bi-building text-warning me-1"></i>Piso
+                                </label>
+                                <input asp-for="Piso" class="form-control" />
+                                <span asp-validation-for="Piso" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Edificio" class="form-label fw-semibold">
+                                    <i class="bi bi-buildings text-warning me-1"></i>Edificio
+                                </label>
+                                <input asp-for="Edificio" class="form-control" />
+                                <span asp-validation-for="Edificio" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label asp-for="Observaciones" class="form-label fw-semibold">
+                                <i class="bi bi-chat-left-text text-warning me-1"></i>Observaciones
+                            </label>
+                            <textarea asp-for="Observaciones" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Observaciones" class="text-danger"></span>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a asp-action="Index" class="btn btn-secondary btn-lg px-4">
+                                <i class="bi bi-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning btn-lg px-5">
+                                <i class="bi bi-check-circle me-2"></i>Actualizar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

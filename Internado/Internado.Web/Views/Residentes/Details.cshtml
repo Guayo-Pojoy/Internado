@@ -1,21 +1,209 @@
 ﻿@model Internado.Infrastructure.Models.Residente
 @{
-    ViewData["Title"] = "Detalles de residente";
+    ViewData["Title"] = "Detalles del Residente";
 }
-<h1 class="mb-3">Detalles</h1>
 
-<dl class="row">
-    <dt class="col-sm-2">Id</dt><dd class="col-sm-10">@Model.Id</dd>
-    <dt class="col-sm-2">Nombre</dt><dd class="col-sm-10">@Model.NombreCompleto</dd>
-    <dt class="col-sm-2">DPI</dt><dd class="col-sm-10">@Model.DPI</dd>
-    <dt class="col-sm-2">Tutor</dt><dd class="col-sm-10">@Model.Tutor</dd>
-    <dt class="col-sm-2">Estado</dt><dd class="col-sm-10">@Model.Estado</dd>
-    <dt class="col-sm-2">Nacimiento</dt><dd class="col-sm-10">@Model.FechaNacimiento</dd>
-    <dt class="col-sm-2">Ingreso</dt><dd class="col-sm-10">@Model.FechaIngreso</dd>
-    <dt class="col-sm-2">Egreso</dt><dd class="col-sm-10">@Model.FechaEgreso</dd>
-</dl>
+<div class="row">
+    <div class="col-lg-10 offset-lg-1 col-xl-8 offset-xl-2">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index"><i class="bi bi-house"></i> Residentes</a></li>
+                <li class="breadcrumb-item active">@Model.NombreCompleto</li>
+            </ol>
+        </nav>
 
-<p>
-    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Editar</a>
-    <a asp-action="Index" class="btn btn-secondary">Volver</a>
-</p>
+        <div class="card border-0 mb-4">
+            <div class="card-header bg-gradient text-white py-4" style="background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-lg bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 70px; height: 70px;">
+                        <i class="bi bi-person-fill fs-1"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">@Model.NombreCompleto</h3>
+                        <div class="d-flex gap-2 align-items-center">
+                            @if (Model.Estado == "Activa")
+                            {
+                                <span class="badge bg-light text-success fs-6">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Activa
+                                </span>
+                            }
+                            else if (Model.Estado == "Egresada")
+                            {
+                                <span class="badge bg-light text-info fs-6">
+                                    <i class="bi bi-door-open-fill me-1"></i>Egresada
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-warning fs-6">
+                                    <i class="bi bi-pause-circle-fill me-1"></i>Suspendida
+                                </span>
+                            }
+                            <span class="text-white-50">|</span>
+                            <span class="small"><i class="bi bi-card-text me-1"></i>DPI: @Model.DPI</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    <!-- Información Personal -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 h-100" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-person-vcard text-primary me-2"></i>Información Personal
+                            </h5>
+                            <div class="mb-3">
+                                <label class="text-muted small fw-bold mb-1">
+                                    <i class="bi bi-person me-1"></i>NOMBRE COMPLETO
+                                </label>
+                                <p class="h5 mb-0">@Model.NombreCompleto</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="text-muted small fw-bold mb-1">
+                                    <i class="bi bi-calendar-event me-1"></i>FECHA DE NACIMIENTO
+                                </label>
+                                <p class="h6 mb-0">@($"{Model.FechaNacimiento:dd/MM/yyyy}")</p>
+                            </div>
+                            <div>
+                                <label class="text-muted small fw-bold mb-1">
+                                    <i class="bi bi-card-text me-1"></i>DPI
+                                </label>
+                                <p class="h6 mb-0"><code class="bg-white px-3 py-2 rounded">@Model.DPI</code></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tutor y Estado -->
+                    <div class="col-md-6">
+                        <div class="border rounded p-3 h-100" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-person-check text-success me-2"></i>Tutor y Estado
+                            </h5>
+                            <div class="mb-3">
+                                <label class="text-muted small fw-bold mb-1">
+                                    <i class="bi bi-person-badge me-1"></i>TUTOR RESPONSABLE
+                                </label>
+                                <p class="h5 mb-0">@Model.Tutor</p>
+                            </div>
+                            <div class="mb-3">
+                                <label class="text-muted small fw-bold mb-1">
+                                    <i class="bi bi-shield-check me-1"></i>ESTADO ACTUAL
+                                </label>
+                                <div>
+                                    @if (Model.Estado == "Activa")
+                                    {
+                                        <span class="badge bg-success fs-6 px-3 py-2">
+                                            <i class="bi bi-check-circle-fill me-2"></i>ACTIVA
+                                        </span>
+                                    }
+                                    else if (Model.Estado == "Egresada")
+                                    {
+                                        <span class="badge bg-info fs-6 px-3 py-2">
+                                            <i class="bi bi-door-open-fill me-2"></i>EGRESADA
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning fs-6 px-3 py-2">
+                                            <i class="bi bi-pause-circle-fill me-2"></i>SUSPENDIDA
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fechas -->
+                    <div class="col-12">
+                        <div class="border rounded p-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                            <h5 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-calendar-range text-info me-2"></i>Registro de Fechas
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="bg-success bg-opacity-10 rounded-circle p-3 me-3">
+                                            <i class="bi bi-calendar-plus fs-4 text-success"></i>
+                                        </div>
+                                        <div>
+                                            <label class="text-muted small fw-bold mb-1">FECHA DE INGRESO</label>
+                                            <p class="h5 mb-0">@($"{Model.FechaIngreso:dd/MM/yyyy}")</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="@(Model.FechaEgreso.HasValue ? "bg-danger" : "bg-secondary") bg-opacity-10 rounded-circle p-3 me-3">
+                                            <i class="bi bi-calendar-x fs-4 @(Model.FechaEgreso.HasValue ? "text-danger" : "text-secondary")"></i>
+                                        </div>
+                                        <div>
+                                            <label class="text-muted small fw-bold mb-1">FECHA DE EGRESO</label>
+                                            @if (Model.FechaEgreso.HasValue)
+                                            {
+                                                <p class="h5 mb-0">@($"{Model.FechaEgreso.Value:dd/MM/yyyy}")</p>
+                                            }
+                                            else
+                                            {
+                                                <p class="text-muted mb-0"><em>Sin fecha de egreso</em></p>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-light border-top-0 p-4">
+                <div class="d-flex gap-2 justify-content-end">
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning btn-lg px-4">
+                        <i class="bi bi-pencil me-2"></i>Editar Información
+                    </a>
+                    <button type="button" class="btn btn-danger btn-lg px-4" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="bi bi-trash me-2"></i>Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación de eliminación -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-3">¿Está seguro de que desea eliminar el registro de:</p>
+                <div class="alert alert-light border">
+                    <strong class="d-block">@Model.NombreCompleto</strong>
+                    <small class="text-muted">DPI: @Model.DPI</small>
+                </div>
+                <p class="text-danger mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>Esta acción no se puede deshacer.</strong>
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                </button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-2"></i>Sí, Eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
