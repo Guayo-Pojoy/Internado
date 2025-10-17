@@ -103,7 +103,9 @@
                 </h5>
             </div>
             <div class="card-body">
-                <canvas id="chartEstados" height="250"></canvas>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="chartEstados"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -117,7 +119,9 @@
                 </h5>
             </div>
             <div class="card-body">
-                <canvas id="chartIngresos" height="100"></canvas>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="chartIngresos"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -134,7 +138,9 @@
                 </h5>
             </div>
             <div class="card-body">
-                <canvas id="chartEdades" height="150"></canvas>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="chartEdades"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -147,7 +153,7 @@
                     <i class="bi bi-clock-history text-warning me-2"></i>Ingresos Recientes
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="card-body" style="max-height: 320px; overflow-y: auto;">
                 @if (residentesRecientes != null && residentesRecientes.Any())
                 {
                     <div class="list-group list-group-flush">
@@ -204,37 +210,37 @@
 <!-- Acciones rápidas -->
 <div class="row g-4">
     <div class="col-md-4">
-        <div class="card border-0 text-center p-4 h-100 quick-action-card">
+        <div class="card border-0 text-center quick-action-card" style="padding: 2rem;">
             <div class="mb-3">
                 <i class="bi bi-person-plus-fill display-4 text-success"></i>
             </div>
             <h5>Nuevo Residente</h5>
             <p class="text-muted mb-3">Registrar un nuevo residente en el sistema</p>
-            <a asp-controller="Residentes" asp-action="Create" class="btn btn-success">
+            <a asp-controller="Residentes" asp-action="Create" class="btn btn-success mt-auto">
                 <i class="bi bi-plus-circle me-2"></i>Agregar Residente
             </a>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card border-0 text-center p-4 h-100 quick-action-card">
+        <div class="card border-0 text-center quick-action-card" style="padding: 2rem;">
             <div class="mb-3">
                 <i class="bi bi-search display-4 text-primary"></i>
             </div>
             <h5>Buscar Residente</h5>
             <p class="text-muted mb-3">Consultar información de residentes</p>
-            <a asp-controller="Residentes" asp-action="Index" class="btn btn-primary">
+            <a asp-controller="Residentes" asp-action="Index" class="btn btn-primary mt-auto">
                 <i class="bi bi-search me-2"></i>Ir a Búsqueda
             </a>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="card border-0 text-center p-4 h-100 quick-action-card">
+        <div class="card border-0 text-center quick-action-card" style="padding: 2rem;">
             <div class="mb-3">
                 <i class="bi bi-file-earmark-excel display-4 text-info"></i>
             </div>
             <h5>Exportar Datos</h5>
             <p class="text-muted mb-3">Descargar reporte en formato Excel</p>
-            <a asp-controller="Residentes" asp-action="Index" class="btn btn-info">
+            <a asp-controller="Residentes" asp-action="Index" class="btn btn-info mt-auto">
                 <i class="bi bi-download me-2"></i>Exportar Excel
             </a>
         </div>
@@ -421,6 +427,74 @@
         .quick-action-card {
             transition: all 0.3s ease;
             cursor: pointer;
+        }
+
+        /* Optimización de espacios en dashboard */
+        .stats-card {
+            padding: 1.25rem;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--card-color-start) 0%, var(--card-color-end) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .stats-card h5 {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-card h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stats-card small {
+            font-size: 0.7rem;
+        }
+
+        /* Ajuste de alturas de tarjetas */
+        .card {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-body {
+            padding: 1.25rem;
+        }
+
+        .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        /* Optimizar lista de residentes recientes */
+        .list-group-item {
+            padding: 0.75rem 0;
+        }
+
+        /* Mejorar las tarjetas de acción rápida */
+        .quick-action-card .display-4 {
+            font-size: 2.5rem;
+        }
+
+        .quick-action-card h5 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .quick-action-card p {
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
         }
     </style>
 }

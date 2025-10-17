@@ -21,6 +21,9 @@ public partial class Curso
     public virtual ICollection<Asistencium> Asistencia { get; set; } = new List<Asistencium>();
 
     [InverseProperty("Curso")]
+    public virtual ICollection<DocenteCurso> AsignacionesDocentes { get; set; } = new List<DocenteCurso>();
+
+    [InverseProperty("Curso")]
     public virtual ICollection<Calificacione> Calificaciones { get; set; } = new List<Calificacione>();
 
     [ForeignKey("DocenteId")]

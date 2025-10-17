@@ -1,0 +1,220 @@
+@model Internado.Infrastructure.Models.Curso
+
+@{
+    ViewData["Title"] = "Detalles del Curso";
+    var colaboradores = Model.AsignacionesDocentes
+        .Where(ad => ad.Activa && ad.DocenteId != Model.DocenteId)
+        .ToList();
+    var totalEstudiantes = Model.Calificaciones.Select(c => c.ResidenteId).Distinct().Count();
+    var userRole = User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-book"></i> @Model.Nombre</h2>
+            <p class="text-muted">Detalles del curso</p>
+        </div>
+        <div class="col-auto">
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+            @if (userRole == "Administrador")
+            {
+                <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-warning">
+                    <i class="bi bi-pencil"></i> Editar
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Información General -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-people-fill text-primary" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">@totalEstudiantes</h3>
+                    <p class="text-muted mb-0">Estudiantes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-journal-check text-success" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">@Model.Calificaciones.Count</h3>
+                    <p class="text-muted mb-0">Calificaciones</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-calendar-check text-info" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">@Model.Asistencia.Count</h3>
+                    <p class="text-muted mb-0">Asistencias</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="bi bi-person-video2 text-warning" style="font-size: 2rem;"></i>
+                    <h3 class="mt-2">@(1 + colaboradores.Count)</h3>
+                    <p class="text-muted mb-0">Docentes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información del Curso -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Información del Curso</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <th style="width: 40%;">ID del Curso:</th>
+                                <td>@Model.Id</td>
+                            </tr>
+                            <tr>
+                                <th>Nombre:</th>
+                                <td><strong>@Model.Nombre</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-person-badge"></i> Docentes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Docente Principal:</strong>
+                        <div class="mt-2">
+                            <span class="badge bg-primary p-2">
+                                <i class="bi bi-person-circle"></i> @Model.Docente.Nombre
+                            </span>
+                        </div>
+                    </div>
+
+                    @if (colaboradores.Any())
+                    {
+                        <div>
+                            <strong>Docentes Colaboradores:</strong>
+                            <div class="mt-2">
+                                @foreach (var asignacion in colaboradores)
+                                {
+                                    <span class="badge bg-secondary p-2 me-1 mb-1">
+                                        <i class="bi bi-person"></i> @asignacion.Docente.Nombre
+                                    </span>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted">
+                            <small>Sin docentes colaboradores</small>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estudiantes del Curso -->
+    @if (totalEstudiantes > 0)
+    {
+        var estudiantes = Model.Calificaciones
+            .GroupBy(c => new { c.ResidenteId, c.Residente.NombreCompleto })
+            .Select(g => new
+            {
+                g.Key.ResidenteId,
+                g.Key.NombreCompleto,
+                TotalCalificaciones = g.Count(),
+                Promedio = g.Average(c => (double)c.Nota)
+            })
+            .OrderBy(e => e.NombreCompleto)
+            .ToList();
+
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-people"></i> Estudiantes Inscritos</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nombre Completo</th>
+                                <th class="text-center">Calificaciones</th>
+                                <th class="text-center">Promedio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var estudiante in estudiantes)
+                            {
+                                var badgeClass = estudiante.Promedio >= 70 ? "bg-success" :
+                                               estudiante.Promedio >= 60 ? "bg-warning" : "bg-danger";
+
+                                <tr>
+                                    <td>@estudiante.NombreCompleto</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">@estudiante.TotalCalificaciones</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge @badgeClass">
+                                            @estudiante.Promedio.ToString("F1")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Acciones Rápidas -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-lightning"></i> Acciones Rápidas</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <a href="@Url.Action("RegistrarCalificacion", "Calificaciones", new { cursoId = Model.Id })"
+                       class="btn btn-outline-success w-100">
+                        <i class="bi bi-journal-plus"></i>
+                        <div class="mt-2">Registrar Calificaciones</div>
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="@Url.Action("RegistrarAsistencia", "Asistencia", new { cursoId = Model.Id })"
+                       class="btn btn-outline-info w-100">
+                        <i class="bi bi-check2-square"></i>
+                        <div class="mt-2">Registrar Asistencia</div>
+                    </a>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <a href="@Url.Action("ReporteCalificaciones", "Reportes", new { cursoId = Model.Id })"
+                       class="btn btn-outline-primary w-100">
+                        <i class="bi bi-file-earmark-bar-graph"></i>
+                        <div class="mt-2">Ver Reportes</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

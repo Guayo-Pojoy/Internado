@@ -26,6 +26,7 @@ public partial class InternadoDbContext : DbContext
     public virtual DbSet<Habitacion> Habitaciones { get; set; }
     public virtual DbSet<Role> Roles { get; set; }
     public virtual DbSet<Usuario> Usuarios { get; set; }
+    public virtual DbSet<DocenteCurso> DocenteCursos { get; set; }
     public virtual DbSet<LoginAttempt> LoginAttempts { get; set; }
     public virtual DbSet<vw_Indicadore> vw_Indicadores { get; set; }
     public virtual DbSet<vw_ReportesGenerale> vw_ReportesGenerales { get; set; }
@@ -135,6 +136,28 @@ public partial class InternadoDbContext : DbContext
                 .HasForeignKey(d => d.UsuarioId)
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("FK_LoginAttempts_Usuarios");
+        });
+
+        modelBuilder.Entity<DocenteCurso>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FechaAsignacion).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.Activa).HasDefaultValue(true);
+
+            entity.HasOne(d => d.Docente)
+                .WithMany(p => p.DocenteCursos)
+                .HasForeignKey(d => d.DocenteId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_DocenteCurso_Usuario");
+
+            entity.HasOne(d => d.Curso)
+                .WithMany(p => p.AsignacionesDocentes)
+                .HasForeignKey(d => d.CursoId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_DocenteCurso_Curso");
+
+            // Índice único: un docente no puede estar asignado dos veces al mismo curso
+            entity.HasIndex(e => new { e.DocenteId, e.CursoId }).IsUnique();
         });
 
         // === Configuración de RESIDENTE usando ResidenteConfiguration ===

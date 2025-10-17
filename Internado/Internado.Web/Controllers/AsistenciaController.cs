@@ -23,8 +23,10 @@ public class AsistenciaController : Controller
     public async Task<IActionResult> Index()
     {
         var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+        // Solo obtener cursos asignados al docente
         var cursos = await _db.Cursos
-            .Where(c => c.DocenteId == usuarioId)
+            .Where(c => c.AsignacionesDocentes.Any(ad => ad.DocenteId == usuarioId && ad.Activa))
             .ToListAsync();
 
         return View(cursos);
@@ -37,12 +39,19 @@ public class AsistenciaController : Controller
         var fechaOnly = DateOnly.FromDateTime(fecha.Value);
 
         var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
         var curso = await _db.Cursos
             .Include(c => c.Asistencia)
-            .FirstOrDefaultAsync(c => c.Id == cursoId && c.DocenteId == usuarioId);
+            .Include(c => c.AsignacionesDocentes)
+            .FirstOrDefaultAsync(c => c.Id == cursoId);
 
         if (curso == null)
             return NotFound();
+
+        // Validar que el docente está asignado
+        var tieneAcceso = curso.AsignacionesDocentes.Any(ad => ad.DocenteId == usuarioId && ad.Activa);
+        if (!tieneAcceso)
+            return Unauthorized("No tienes permiso para este curso.");
 
         var residentes = await _db.Residentes
             .Where(r => r.Estado == "Activa")
@@ -71,10 +80,18 @@ public class AsistenciaController : Controller
         Dictionary<string, string> asistencia, Dictionary<string, string>? excusa = null)
     {
         var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-        var curso = await _db.Cursos.FirstOrDefaultAsync(c => c.Id == cursoId && c.DocenteId == usuarioId);
+
+        var curso = await _db.Cursos
+            .Include(c => c.AsignacionesDocentes)
+            .FirstOrDefaultAsync(c => c.Id == cursoId);
 
         if (curso == null)
             return Unauthorized();
+
+        // Validar acceso
+        var tieneAcceso = curso.AsignacionesDocentes.Any(ad => ad.DocenteId == usuarioId && ad.Activa);
+        if (!tieneAcceso)
+            return Unauthorized("No tienes permiso para este curso.");
 
         var fechaOnly = DateOnly.FromDateTime(fecha);
         var estados = new[] { "Presente", "Ausente", "Tarde" };

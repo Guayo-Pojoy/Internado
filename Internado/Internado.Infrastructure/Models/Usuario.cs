@@ -47,6 +47,9 @@ public partial class Usuario
     [InverseProperty("Docente")]
     public virtual ICollection<Curso> Cursos { get; set; } = new List<Curso>();
 
+    [InverseProperty("Docente")]
+    public virtual ICollection<DocenteCurso> DocenteCursos { get; set; } = new List<DocenteCurso>();
+
     [InverseProperty("Usuario")]
     public virtual ICollection<MovimientosMedicamento> MovimientosMedicamentos { get; set; } = new List<MovimientosMedicamento>();
 

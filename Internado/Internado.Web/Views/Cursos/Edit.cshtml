@@ -1,0 +1,178 @@
+@model Internado.Infrastructure.Models.Curso
+
+@{
+    ViewData["Title"] = "Editar Curso";
+    var docentes = ViewBag.Docentes as List<Internado.Infrastructure.Models.Usuario> ?? new List<Internado.Infrastructure.Models.Usuario>();
+    var docentesAsignados = ViewBag.DocentesAsignados as List<int> ?? new List<int>();
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-pencil"></i> Editar Curso</h2>
+        </div>
+        <div class="col-auto">
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="form-group mb-3">
+                            <label for="nombre" class="form-label">
+                                <i class="bi bi-book"></i> Nombre del Curso <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="nombre" id="nombre"
+                                   class="form-control"
+                                   value="@Model.Nombre"
+                                   placeholder="Ej: Matemáticas I"
+                                   required
+                                   maxlength="100">
+                            <div class="form-text">Máximo 100 caracteres</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="docentePrincipalId" class="form-label">
+                                <i class="bi bi-person-badge"></i> Docente Principal <span class="text-danger">*</span>
+                            </label>
+                            <select name="docentePrincipalId" id="docentePrincipalId"
+                                    class="form-select"
+                                    required>
+                                <option value="">-- Seleccionar --</option>
+                                @foreach (var docente in docentes)
+                                {
+                                    <option value="@docente.Id" selected="@(docente.Id == Model.DocenteId)">
+                                        @docente.Nombre
+                                    </option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label">
+                        <i class="bi bi-people"></i> Docentes Colaboradores (opcional)
+                    </label>
+                    <div class="form-text mb-2">
+                        Seleccione los docentes colaboradores que tendrán acceso al curso
+                    </div>
+
+                    @if (docentes.Any())
+                    {
+                        <div class="row">
+                            @foreach (var docente in docentes)
+                            {
+                                var isAsignado = docentesAsignados.Contains(docente.Id);
+                                var isPrincipal = docente.Id == Model.DocenteId;
+
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input type="checkbox"
+                                               name="docenteIds"
+                                               value="@docente.Id"
+                                               id="docente_@docente.Id"
+                                               class="form-check-input"
+                                               checked="@isAsignado"
+                                               disabled="@isPrincipal">
+                                        <label for="docente_@docente.Id" class="form-check-label">
+                                            @docente.Nombre
+                                            @if (isPrincipal)
+                                            {
+                                                <span class="badge bg-primary">Principal</span>
+                                            }
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            No hay docentes disponibles en el sistema.
+                        </div>
+                    }
+                </div>
+
+                <div class="border-top pt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Guardar Cambios
+                    </button>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-info text-white">
+            <i class="bi bi-info-circle"></i> Información del Curso
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <strong>Total de Estudiantes:</strong>
+                    <span class="badge bg-primary ms-2">
+                        @Model.Calificaciones.Select(c => c.ResidenteId).Distinct().Count()
+                    </span>
+                </div>
+                <div class="col-md-4">
+                    <strong>Calificaciones Registradas:</strong>
+                    <span class="badge bg-success ms-2">
+                        @Model.Calificaciones.Count
+                    </span>
+                </div>
+                <div class="col-md-4">
+                    <strong>Registros de Asistencia:</strong>
+                    <span class="badge bg-warning ms-2">
+                        @Model.Asistencia.Count
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-deseleccionar docente principal si se selecciona como colaborador
+        document.getElementById('docentePrincipalId').addEventListener('change', function() {
+            const docentePrincipalId = this.value;
+
+            // Habilitar todos los checkboxes primero
+            document.querySelectorAll('input[name="docenteIds"]').forEach(cb => {
+                cb.disabled = false;
+            });
+
+            if (docentePrincipalId) {
+                const checkbox = document.getElementById('docente_' + docentePrincipalId);
+                if (checkbox) {
+                    checkbox.checked = false;
+                    checkbox.disabled = true;
+                }
+            }
+        });
+
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            const docentePrincipalId = document.getElementById('docentePrincipalId').value;
+            if (docentePrincipalId) {
+                const checkbox = document.getElementById('docente_' + docentePrincipalId);
+                if (checkbox) {
+                    checkbox.disabled = true;
+                }
+            }
+        });
+    </script>
+}
