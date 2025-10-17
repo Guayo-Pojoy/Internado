@@ -22,7 +22,7 @@ namespace Internado.Web.Models.Users
         public bool Estado { get; set; } = true;
 
         [DataType(DataType.Password)]
-        [Display(Name="Contraseña (dejar vacío para no cambiar)")]
+        [Display(Name="Contraseña")]
         public string? Password { get; set; }
     }
 }

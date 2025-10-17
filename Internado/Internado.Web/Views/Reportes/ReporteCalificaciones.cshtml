@@ -1,0 +1,165 @@
+@model List<Internado.Infrastructure.Models.Calificacione>
+
+@{
+    ViewData["Title"] = "Reporte de Calificaciones";
+    var cursoId = ViewBag.CursoId as int?;
+    var cursos = ViewBag.Cursos as List<Internado.Infrastructure.Models.Curso> ?? new();
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-journal-text"></i> Reporte de Calificaciones</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filtros</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="ReporteCalificaciones" method="get">
+                <div class="row">
+                    <div class="col-md-10">
+                        <label for="cursoId" class="form-label">Curso</label>
+                        <select name="cursoId" id="cursoId" class="form-select">
+                            <option value="">Todos los cursos</option>
+                            @foreach (var curso in cursos)
+                            {
+                                <option value="@curso.Id" selected="@(cursoId == curso.Id)">@curso.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Botón Exportar -->
+    <div class="mb-3 text-end">
+        <a href="@Url.Action("DescargarCalificacionesExcel", new { cursoId })"
+           class="btn btn-success">
+            <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+        </a>
+    </div>
+
+    <!-- Tabla de Calificaciones -->
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay calificaciones registradas.
+        </div>
+    }
+    else
+    {
+        <!-- Estadísticas Generales -->
+        var notaPromedio = Model.Average(c => (double)c.Nota);
+        var notaMaxima = Model.Max(c => c.Nota);
+        var notaMinima = Model.Min(c => c.Nota);
+        var aprobados = Model.Count(c => c.Nota >= 60);
+        var reprobados = Model.Count(c => c.Nota < 60);
+
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted">Promedio General</h6>
+                        <h3 class="text-primary">@notaPromedio.ToString("F1")</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted">Nota Máxima</h6>
+                        <h3 class="text-success">@notaMaxima</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted">Nota Mínima</h6>
+                        <h3 class="text-danger">@notaMinima</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6 class="text-muted">Aprobados / Reprobados</h6>
+                        <h3>
+                            <span class="text-success">@aprobados</span> /
+                            <span class="text-danger">@reprobados</span>
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-list-check"></i> Detalle de Calificaciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Residente</th>
+                                <th>Curso</th>
+                                <th class="text-center">Nota</th>
+                                <th class="text-center">Estado</th>
+                                <th>Fecha Registro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                var estadoAprobacion = item.Nota >= 60 ? "Aprobado" : "Reprobado";
+                                var badgeClass = item.Nota >= 70 ? "bg-success" :
+                                               item.Nota >= 60 ? "bg-warning" : "bg-danger";
+
+                                <tr>
+                                    <td>@item.Residente.NombreCompleto</td>
+                                    <td>@item.Curso.Nombre</td>
+                                    <td class="text-center">
+                                        <span class="badge @badgeClass fs-6">@item.Nota</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.Nota >= 60)
+                                        {
+                                            <span class="badge bg-success">Aprobado</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Reprobado</span>
+                                        }
+                                    </td>
+                                    <td>@item.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-3">
+            <i class="bi bi-info-circle"></i>
+            <strong>Total de calificaciones:</strong> @Model.Count |
+            <strong>Tasa de aprobación:</strong> @(((double)aprobados / Model.Count * 100).ToString("F1"))%
+        </div>
+    }
+</div>

@@ -1,0 +1,64 @@
+@{
+    ViewData["Title"] = "Nuevo Medicamento";
+}
+
+<div class="container mt-4">
+    <h2><i class="bi bi-capsule"></i> Nuevo Medicamento</h2>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-body">
+            <form asp-action="CrearMedicamento" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre del Medicamento <span class="text-danger">*</span></label>
+                    <input type="text" name="nombre" id="nombre" class="form-control"
+                           maxlength="150" required placeholder="Ej: Paracetamol, Ibuprofeno...">
+                </div>
+
+                <div class="mb-3">
+                    <label for="lote" class="form-label">Lote <span class="text-danger">*</span></label>
+                    <input type="text" name="lote" id="lote" class="form-control"
+                           maxlength="50" required placeholder="Ej: L2024-001, BATCH-123">
+                    <small class="text-muted">Código del lote del medicamento</small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="fechaVencimiento" class="form-label">Fecha de Vencimiento <span class="text-danger">*</span></label>
+                    <input type="date" name="fechaVencimiento" id="fechaVencimiento" class="form-control" required>
+                    <small class="text-muted">Fecha en que el medicamento vence</small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="cantidad" class="form-label">Cantidad Inicial <span class="text-danger">*</span></label>
+                    <input type="number" name="cantidad" id="cantidad" class="form-control"
+                           min="0" value="0" required>
+                    <small class="text-muted">Stock inicial del medicamento</small>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Nota:</strong> El stock mínimo se establecerá automáticamente en 10 unidades.
+                    Recibirá alertas cuando el stock esté por debajo de este valor.
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg"></i> Registrar Medicamento
+                    </button>
+                    <a href="@Url.Action("Medicamentos")" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

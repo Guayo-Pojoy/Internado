@@ -348,65 +348,90 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div id="navMain" class="collapse navbar-collapse">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item">
-            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")" 
-               asp-controller="Dashboard" 
-               asp-action="Index">
-              <i class="bi bi-speedometer2"></i> Dashboard
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Residentes" ? "active" : "")" 
-               asp-controller="Residentes" 
-               asp-action="Index">
-              <i class="bi bi-people-fill"></i> Residentes
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")" 
-               asp-controller="Users" 
-               asp-action="Index">
-              <i class="bi bi-person-badge"></i> Usuarios
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Habitaciones" ? "active" : "")" 
-              asp-controller="Habitaciones" 
-              asp-action="Index">
-              <i class="bi bi-door-closed"></i> Habitaciones
-            </a>
-          </li>
-        </ul>
         <ul class="navbar-nav ms-auto">
-@{
-    var user = HttpCtx.HttpContext?.User;
-    var nombre = user?.Identity?.IsAuthenticated == true ? (user.Identity!.Name ?? "Usuario") : null;
+          @{
+              var userRole = User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+          }
 
-    if (user?.Identity?.IsAuthenticated == true)
-    {
-      <li class="nav-item me-3">
-        <span class="navbar-text text-white">
-          <i class="bi bi-person-circle"></i> Bienvenido, <strong>@nombre</strong>
-        </span>
-      </li>
-      <li class="nav-item">
-        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-          <button class="btn btn-sm btn-light">
-            <i class="bi bi-box-arrow-right"></i> Cerrar sesión
-          </button>
-        </form>
-      </li>
-    }
-    else
-    {
-      <li class="nav-item">
-        <a class="nav-link" asp-controller="Account" asp-action="Login">
-          <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
-        </a>
-      </li>
-    }
-}
+          @if (User?.Identity?.IsAuthenticated ?? false)
+          {
+              <!-- ADMINISTRADOR: Acceso completo -->
+              @if (userRole == "Administrador")
+              {
+                  <li class="nav-item">
+                      <a class="nav-link" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" asp-controller="Users" asp-action="Index"><i class="bi bi-person-badge"></i> Usuarios</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" asp-controller="Residentes" asp-action="Index"><i class="bi bi-people-fill"></i> Residentes</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" asp-controller="Habitaciones" asp-action="Index"><i class="bi bi-door-closed"></i> Habitaciones</a>
+                  </li>
+              }
+
+              <!-- DOCENTE: Académico -->
+              @if (userRole == "Docente")
+              {
+                  <li class="nav-item">
+                      <a class="nav-link" asp-controller="Calificaciones" asp-action="Index"><i class="bi bi-journal-text"></i> Calificaciones</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" href="/Asistencia"><i class="bi bi-check2-circle"></i> Asistencia</a>
+                  </li>
+              }
+
+              <!-- MEDICO: Salud -->
+              @if (userRole == "Medico")
+              {
+                  <li class="nav-item">
+                      <a class="nav-link" href="/Medico/Consultas"><i class="bi bi-heart-pulse"></i> Consultas</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" href="/Medico/Medicamentos"><i class="bi bi-capsule"></i> Medicamentos</a>
+                  </li>
+              }
+
+              <!-- DIRECCIÓN: Gestión -->
+              @if (userRole == "Direccion")
+              {
+                  <li class="nav-item">
+                      <a class="nav-link" asp-controller="Residentes" asp-action="Index"><i class="bi bi-people-fill"></i> Residentes</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" asp-controller="Habitaciones" asp-action="Index"><i class="bi bi-door-closed"></i> Habitaciones</a>
+                  </li>
+                  <li class="nav-item">
+                      <a class="nav-link" href="/Reportes"><i class="bi bi-file-earmark-bar-graph"></i> Reportes</a>
+                  </li>
+              }
+
+              <!-- USUARIO AUTENTICADO: Perfil y Logout -->
+              <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                      <i class="bi bi-person-circle"></i> @User?.Identity?.Name
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                      <li><h6 class="dropdown-header">@userRole</h6></li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li>
+                          <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                              <button type="submit" class="dropdown-item">
+                                  <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+                              </button>
+                          </form>
+                      </li>
+                  </ul>
+              </li>
+          }
+          else
+          {
+              <li class="nav-item">
+                  <a class="nav-link" href="/Account/Login"><i class="bi bi-box-arrow-in-right"></i> Iniciar sesión</a>
+              </li>
+          }
         </ul>
       </div>
     </div>

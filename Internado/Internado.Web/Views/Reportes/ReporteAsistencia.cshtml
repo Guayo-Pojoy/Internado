@@ -1,0 +1,131 @@
+@model List<dynamic>
+
+@{
+    ViewData["Title"] = "Reporte de Asistencia";
+    var fechaInicio = ViewBag.FechaInicio as DateTime?;
+    var fechaFin = ViewBag.FechaFin as DateTime?;
+    var cursoId = ViewBag.CursoId as int?;
+    var cursos = ViewBag.Cursos as List<Internado.Infrastructure.Models.Curso> ?? new();
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-check2-circle"></i> Reporte de Asistencia</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-funnel"></i> Filtros</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="ReporteAsistencia" method="get">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="fechaInicio" class="form-label">Fecha Inicio</label>
+                        <input type="date" name="fechaInicio" id="fechaInicio" class="form-control"
+                               value="@fechaInicio?.ToString("yyyy-MM-dd")">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="fechaFin" class="form-label">Fecha Fin</label>
+                        <input type="date" name="fechaFin" id="fechaFin" class="form-control"
+                               value="@fechaFin?.ToString("yyyy-MM-dd")">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="cursoId" class="form-label">Curso</label>
+                        <select name="cursoId" id="cursoId" class="form-select">
+                            <option value="">Todos los cursos</option>
+                            @foreach (var curso in cursos)
+                            {
+                                <option value="@curso.Id" selected="@(cursoId == curso.Id)">@curso.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Botón Exportar -->
+    <div class="mb-3 text-end">
+        <a href="@Url.Action("DescargarAsistenciaExcel", new { cursoId, fechaInicio = fechaInicio?.ToString("yyyy-MM-dd"), fechaFin = fechaFin?.ToString("yyyy-MM-dd") })"
+           class="btn btn-success">
+            <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+        </a>
+    </div>
+
+    <!-- Resumen -->
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay datos de asistencia para el período seleccionado.
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Resumen de Asistencia</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Residente</th>
+                                <th class="text-center">Total Registros</th>
+                                <th class="text-center">Presentes</th>
+                                <th class="text-center">Ausentes</th>
+                                <th class="text-center">Tardes</th>
+                                <th class="text-center">% Asistencia</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                var porcentaje = item.PorcentajeAsistencia;
+                                var badgeClass = porcentaje >= 90 ? "bg-success" :
+                                               porcentaje >= 75 ? "bg-warning" : "bg-danger";
+
+                                <tr>
+                                    <td>@item.Residente</td>
+                                    <td class="text-center">@item.Total</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success">@item.Presentes</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger">@item.Ausentes</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-warning">@item.Tardes</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge @badgeClass">@porcentaje.ToString("F1")%</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-3">
+            <i class="bi bi-info-circle"></i>
+            <strong>Total de residentes:</strong> @Model.Count |
+            <strong>Período:</strong> @fechaInicio?.ToString("dd/MM/yyyy") - @fechaFin?.ToString("dd/MM/yyyy")
+        </div>
+    }
+</div>

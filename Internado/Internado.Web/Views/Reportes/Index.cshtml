@@ -1,0 +1,72 @@
+@{
+    ViewData["Title"] = "Reportería";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2><i class="bi bi-file-earmark-bar-graph"></i> Reportería General</h2>
+            <p class="text-muted">Sistema de generación de reportes en formato Excel</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-check2-circle"></i> Reporte de Asistencia
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Visualiza y descarga reportes de asistencia de estudiantes por período de tiempo.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check text-success"></i> Filtro por curso</li>
+                        <li><i class="bi bi-check text-success"></i> Filtro por fecha</li>
+                        <li><i class="bi bi-check text-success"></i> Resumen estadístico</li>
+                        <li><i class="bi bi-check text-success"></i> Exportar a Excel</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <a href="@Url.Action("ReporteAsistencia")" class="btn btn-primary w-100">
+                        <i class="bi bi-graph-up"></i> Ver Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-journal-text"></i> Reporte de Calificaciones
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Visualiza y descarga el registro de calificaciones por curso y estudiante.
+                    </p>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check text-success"></i> Filtro por curso</li>
+                        <li><i class="bi bi-check text-success"></i> Notas detalladas</li>
+                        <li><i class="bi bi-check text-success"></i> Indicadores de rendimiento</li>
+                        <li><i class="bi bi-check text-success"></i> Exportar a Excel</li>
+                    </ul>
+                </div>
+                <div class="card-footer">
+                    <a href="@Url.Action("ReporteCalificaciones")" class="btn btn-success w-100">
+                        <i class="bi bi-graph-up"></i> Ver Reporte
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info mt-4">
+        <i class="bi bi-info-circle"></i>
+        <strong>Nota:</strong> Los reportes se generan en tiempo real con la información más actualizada del sistema.
+        Los archivos Excel incluyen formato y colores para mejor visualización de los datos.
+    </div>
+</div>

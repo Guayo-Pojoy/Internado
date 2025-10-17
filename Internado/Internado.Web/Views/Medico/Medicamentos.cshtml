@@ -1,0 +1,131 @@
+@model List<Internado.Infrastructure.Models.Medicamento>
+
+@{
+    ViewData["Title"] = "Gestión de Medicamentos";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-capsule"></i> Gestión de Medicamentos</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            @if (User.IsInRole("Administrador"))
+            {
+                <a href="@Url.Action("NuevoMedicamento")" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nuevo Medicamento
+                </a>
+            }
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay medicamentos registrados.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var medicamento in Model)
+            {
+                var stockClass = medicamento.StockActual <= medicamento.StockMinimo ? "bg-danger" : "bg-success";
+                var stockIcon = medicamento.StockActual <= medicamento.StockMinimo ? "exclamation-triangle" : "check-circle";
+                var vencido = medicamento.FechaVencimiento < DateOnly.FromDateTime(DateTime.Today);
+
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header @stockClass text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-capsule-pill"></i> @medicamento.Nombre
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">
+                                <strong>Lote:</strong> @medicamento.Lote<br>
+                                <strong>Vencimiento:</strong>
+                                <span class="badge @(vencido ? "bg-danger" : "bg-info")">
+                                    @medicamento.FechaVencimiento.ToString("dd/MM/yyyy")
+                                </span><br>
+                                <strong>Stock Actual:</strong>
+                                <span class="badge @stockClass">
+                                    <i class="bi bi-@stockIcon"></i> @medicamento.StockActual unidades
+                                </span>
+                                <br>
+                                <strong>Stock Mínimo:</strong> @medicamento.StockMinimo unidades
+                            </p>
+
+                            @if (vencido)
+                            {
+                                <div class="alert alert-danger mb-3">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <strong>¡Vencido!</strong> No dispensar.
+                                </div>
+                            }
+                            else if (medicamento.StockActual <= medicamento.StockMinimo)
+                            {
+                                <div class="alert alert-warning mb-3">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    <strong>Stock Bajo!</strong> Requiere reabastecimiento.
+                                </div>
+                            }
+
+                            <button type="button" class="btn btn-warning btn-sm w-100"
+                                    data-bs-toggle="modal" data-bs-target="#dispensarModal@(medicamento.Id)"
+                                    @(vencido ? "disabled" : "")>
+                                <i class="bi bi-box-arrow-right"></i> Dispensar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal para dispensar -->
+                <div class="modal fade" id="dispensarModal@(medicamento.Id)" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Dispensar: @medicamento.Nombre</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <form asp-action="DispensarMedicamento" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="medicamentoId" value="@medicamento.Id" />
+                                <div class="modal-body">
+                                    <p><strong>Stock disponible:</strong> @medicamento.StockActual unidades</p>
+                                    <div class="mb-3">
+                                        <label for="cantidad@(medicamento.Id)" class="form-label">Cantidad a dispensar</label>
+                                        <input type="number" name="cantidad" id="cantidad@(medicamento.Id)"
+                                               class="form-control" min="1" max="@medicamento.StockActual" value="1" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-check-lg"></i> Dispensar
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

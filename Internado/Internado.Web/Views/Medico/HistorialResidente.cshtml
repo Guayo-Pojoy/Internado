@@ -1,0 +1,127 @@
+@model Internado.Infrastructure.Models.Residente
+
+@{
+    ViewData["Title"] = $"Historial Médico - {Model.NombreCompleto}";
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="bi bi-clock-history"></i> Historial Médico</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="@Url.Action("Consultas")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-person-badge"></i> Información del Residente</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Nombre:</strong> @Model.NombreCompleto</p>
+                    <p><strong>DPI:</strong> @Model.DPI</p>
+                    <p><strong>Estado:</strong> <span class="badge bg-success">@Model.Estado</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Fecha de Nacimiento:</strong> @Model.FechaNacimiento.ToString("dd/MM/yyyy")</p>
+                    <p><strong>Fecha de Ingreso:</strong> @Model.FechaIngreso.ToString("dd/MM/yyyy")</p>
+                    <p><strong>Tutor:</strong> @Model.Tutor</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-heart-pulse"></i> Consultas Médicas</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Consulta?.Count == 0)
+            {
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No hay consultas registradas para este residente.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Médico</th>
+                                <th>Diagnóstico</th>
+                                <th>Tratamiento</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var consulta in Model.Consulta.OrderByDescending(c => c.Fecha))
+                            {
+                                var tienePaseSalida = consulta.Tratamiento?.Contains("[PASE DE SALIDA AUTORIZADO]") == true;
+                                var tratamientoDisplay = consulta.Tratamiento ?? "Sin tratamiento";
+                                if (tienePaseSalida && consulta.Tratamiento != null)
+                                {
+                                    var idx = consulta.Tratamiento.IndexOf("[PASE DE SALIDA");
+                                    if (idx > 0)
+                                    {
+                                        tratamientoDisplay = consulta.Tratamiento.Substring(0, idx).Trim();
+                                    }
+                                }
+
+                                <tr>
+                                    <td>
+                                        @consulta.Fecha.ToString("dd/MM/yyyy HH:mm")
+                                        @if (tienePaseSalida)
+                                        {
+                                            <br><span class="badge bg-success"><i class="bi bi-file-earmark-check"></i> Con Pase de Salida</span>
+                                        }
+                                    </td>
+                                    <td>@consulta.Medico?.Nombre</td>
+                                    <td>@consulta.Diagnostico</td>
+                                    <td>@tratamientoDisplay</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.HistorialMedicos?.Count > 0)
+    {
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="bi bi-clipboard2-pulse"></i> Historial Médico General</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Diagnóstico</th>
+                                <th>Tratamiento</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var historial in Model.HistorialMedicos.OrderByDescending(h => h.Fecha))
+                            {
+                                <tr>
+                                    <td>@historial.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@historial.Diagnostico</td>
+                                    <td>@(historial.Tratamiento ?? "Sin tratamiento")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

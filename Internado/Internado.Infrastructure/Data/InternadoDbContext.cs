@@ -26,6 +26,7 @@ public partial class InternadoDbContext : DbContext
     public virtual DbSet<Habitacion> Habitaciones { get; set; }
     public virtual DbSet<Role> Roles { get; set; }
     public virtual DbSet<Usuario> Usuarios { get; set; }
+    public virtual DbSet<LoginAttempt> LoginAttempts { get; set; }
     public virtual DbSet<vw_Indicadore> vw_Indicadores { get; set; }
     public virtual DbSet<vw_ReportesGenerale> vw_ReportesGenerales { get; set; }
      
@@ -119,6 +120,21 @@ public partial class InternadoDbContext : DbContext
         {
             entity.ToView("vw_ReportesGenerales", "rep");
             entity.Property(e => e.ResidenteId).ValueGeneratedOnAdd();
+        });
+
+        modelBuilder.Entity<LoginAttempt>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FechaIntento).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.TipoError).HasMaxLength(100).HasDefaultValue("CredencialesInvalidas");
+            entity.Property(e => e.Usuario).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.DireccionIp).HasMaxLength(45);
+
+            entity.HasOne(d => d.UsuarioNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.UsuarioId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_LoginAttempts_Usuarios");
         });
 
         // === Configuración de RESIDENTE usando ResidenteConfiguration ===

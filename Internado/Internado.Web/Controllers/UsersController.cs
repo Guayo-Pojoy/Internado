@@ -16,32 +16,42 @@ namespace Internado.Web.Controllers
 
         public UsersController(InternadoDbContext db, IPasswordHasher hasher)
         {
-            _db = db; _hasher = hasher;
+            _db = db; 
+            _hasher = hasher;
         }
 
         // ====== Helpers de reflexión (para tolerar nombres distintos del scaffold) ======
         private static PropertyInfo? P(object o, string name) => o.GetType().GetProperty(name);
+        
         private static T? Get<T>(object o, string name)
         {
-            var p = P(o, name); if (p == null) return default;
-            var v = p.GetValue(o); return v is T t ? t : default;
+            var p = P(o, name); 
+            if (p == null) return default;
+            var v = p.GetValue(o); 
+            return v is T t ? t : default;
         }
+        
         private static void Set(object o, string name, object? value)
         {
-            var p = P(o, name); if (p != null) p.SetValue(o, value);
+            var p = P(o, name); 
+            if (p != null) p.SetValue(o, value);
         }
 
         private static string? GetUserName(object u) =>
             Get<string>(u, "Usuario") ?? Get<string>(u, "Usuario1") ?? Get<string>(u, "NombreUsuario") ?? Get<string>(u, "Login");
+        
         private static string? GetEmail(object u) =>
             Get<string>(u, "Correo") ?? Get<string>(u, "Email");
+        
         private static int GetId(object u) => Get<int?>(u, "Id") ?? 0;
+        
         private static string? GetHashBase64(object u)
         {
             var b = Get<byte[]>(u, "HashContrasena");
             if (b != null) return Convert.ToBase64String(b);
             return Get<string>(u, "HashContrasena");
         }
+        
         private static void SetHashFromBase64(object u, string base64)
         {
             var p = P(u, "HashContrasena");
@@ -57,7 +67,11 @@ namespace Internado.Web.Controllers
         {
             public int Id { get; }
             public string Texto { get; }
-            public RoleOption(int id, string texto) { Id = id; Texto = texto; }
+            public RoleOption(int id, string texto) 
+            { 
+                Id = id; 
+                Texto = texto; 
+            }
         }
 
         private async Task<List<RoleOption>> GetRolesAsync()
@@ -66,7 +80,7 @@ namespace Internado.Web.Controllers
             var list = new List<RoleOption>();
             foreach (var r in roles)
             {
-                var id   = Get<int?>(r, "Id") ?? 0;
+                var id = Get<int?>(r, "Id") ?? 0;
                 var name = Get<string>(r, "NombreRol") ?? Get<string>(r, "Nombre") ?? "Rol";
                 list.Add(new RoleOption(id, name));
             }
@@ -77,20 +91,45 @@ namespace Internado.Web.Controllers
         {
             ViewBag.Roles = roles.Select(x => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem {
                 Value = x.Id.ToString(),
-                Text  = x.Texto,
+                Text = x.Texto,
                 Selected = x.Id == vm.RolId
             }).ToList();
         }
 
         // ================== Index ==================
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? busqueda, int? rolFiltro)
         {
             var qry = _db.Usuarios.AsQueryable();
             try { qry = qry.Include("Rol"); } catch { }
-            var list = await qry.AsNoTracking()
-                                .OrderBy(u => GetUserName(u) ?? Get<string>(u,"Nombre"))
-                                .ToListAsync();
-            return View(list);
+            
+            // PRIMERO traer a memoria
+            var lista = await qry.AsNoTracking().ToListAsync();
+
+            // LUEGO filtrar por busqueda
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                busqueda = busqueda.ToLower();
+                lista = lista.Where(u => 
+                    (GetUserName(u) ?? "").ToLower().Contains(busqueda) ||
+                    (Get<string>(u, "Nombre") ?? "").ToLower().Contains(busqueda) ||
+                    (GetEmail(u) ?? "").ToLower().Contains(busqueda)
+                ).ToList();
+            }
+
+            // Filtrar por rol
+            if (rolFiltro.HasValue && rolFiltro.Value > 0)
+            {
+                lista = lista.Where(u => Get<int?>(u, "RolId") == rolFiltro.Value).ToList();
+            }
+
+            // FINALMENTE ordenar en memoria
+            lista = lista.OrderBy(u => GetUserName(u) ?? Get<string>(u, "Nombre")).ToList();
+
+            ViewBag.Busqueda = busqueda;
+            ViewBag.RolFiltro = rolFiltro;
+            ViewBag.Roles = await GetRolesAsync();
+            
+            return View(lista);
         }
 
         // ================== Create ==================
@@ -106,12 +145,20 @@ namespace Internado.Web.Controllers
         public async Task<IActionResult> Create(UserFormViewModel vm)
         {
             FillViewBagsForForm(vm, await GetRolesAsync());
+
+            // VALIDACIÓN: La contraseña es obligatoria al crear un usuario
+            if (string.IsNullOrWhiteSpace(vm.Password))
+            {
+                ModelState.AddModelError(nameof(vm.Password), "La contraseña es obligatoria al crear un usuario.");
+            }
+
             if (!ModelState.IsValid) return View(vm);
 
             var users = await _db.Usuarios.AsNoTracking().ToListAsync();
             var dup = users.Any(u =>
                 string.Equals(GetUserName(u) ?? "", vm.Usuario, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(GetEmail(u) ?? "",    vm.Correo,  StringComparison.OrdinalIgnoreCase));
+                string.Equals(GetEmail(u) ?? "", vm.Correo, StringComparison.OrdinalIgnoreCase));
+
             if (dup)
             {
                 ModelState.AddModelError("", "Usuario o correo ya existe.");
@@ -129,21 +176,22 @@ namespace Internado.Web.Controllers
             Set(entity, "Estado", vm.Estado);
             Set(entity, "Correo", vm.Correo);
 
-            if      (P(entity,"Usuario")  != null) Set(entity, "Usuario",  vm.Usuario);
-            else if (P(entity,"Usuario1") != null) Set(entity, "Usuario1", vm.Usuario);
-            else if (P(entity,"Login")    != null) Set(entity, "Login",    vm.Usuario);
+            if (P(entity, "Usuario") != null) Set(entity, "Usuario", vm.Usuario);
+            else if (P(entity, "Usuario1") != null) Set(entity, "Usuario1", vm.Usuario);
+            else if (P(entity, "Login") != null) Set(entity, "Login", vm.Usuario);
 
-            if (P(entity,"RolId") != null) Set(entity, "RolId", vm.RolId);
-            if (P(entity,"FechaRegistro") != null) Set(entity, "FechaRegistro", DateTime.Now);
+            if (P(entity, "RolId") != null) Set(entity, "RolId", vm.RolId);
+            if (P(entity, "FechaRegistro") != null) Set(entity, "FechaRegistro", DateTime.Now);
+            if (P(entity, "IntentosFallidos") != null) Set(entity, "IntentosFallidos", 0);
 
-            if (!string.IsNullOrWhiteSpace(vm.Password))
-            {
-                var hash64 = _hasher.HashToBase64(vm.Password);
-                SetHashFromBase64(entity, hash64);
-            }
+            // Hashear la contraseña (ya validamos que no está vacía)
+            var hash64 = _hasher.HashToBase64(vm.Password!);
+            SetHashFromBase64(entity, hash64);
 
             _db.Add(entity);
             await _db.SaveChangesAsync();
+
+            TempData["Success"] = "Usuario creado exitosamente";
             return RedirectToAction(nameof(Index));
         }
 
@@ -154,14 +202,16 @@ namespace Internado.Web.Controllers
             var u = await _db.Usuarios.FindAsync(id);
             if (u == null) return NotFound();
 
-            var vm = new UserFormViewModel {
-                Id      = id,
-                Nombre  = Get<string>(u,"Nombre") ?? "",
+            var vm = new UserFormViewModel
+            {
+                Id = id,
+                Nombre = Get<string>(u, "Nombre") ?? "",
                 Usuario = GetUserName(u) ?? "",
-                Correo  = GetEmail(u) ?? "",
-                Estado  = Get<bool?>(u,"Estado") ?? true,
-                RolId   = Get<int?>(u,"RolId") ?? 0
+                Correo = GetEmail(u) ?? "",
+                Estado = Get<bool?>(u, "Estado") ?? true,
+                RolId = Get<int?>(u, "RolId") ?? 0
             };
+            
             FillViewBagsForForm(vm, await GetRolesAsync());
             return View(vm);
         }
@@ -175,10 +225,16 @@ namespace Internado.Web.Controllers
             var u = await _db.Usuarios.FindAsync(vm.Id);
             if (u == null) return NotFound();
 
-            var others = await _db.Usuarios.AsNoTracking().Where(x => GetId(x) != vm.Id).ToListAsync();
+            // PRIMERO traer TODOS los usuarios a memoria
+            var allUsers = await _db.Usuarios.AsNoTracking().ToListAsync();
+
+            // LUEGO filtrar en memoria (excluyendo el usuario actual)
+            var others = allUsers.Where(x => GetId(x) != vm.Id).ToList();
+
             var dup = others.Any(x =>
                 string.Equals(GetUserName(x) ?? "", vm.Usuario, StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(GetEmail(x) ?? "",    vm.Correo,  StringComparison.OrdinalIgnoreCase));
+                string.Equals(GetEmail(x) ?? "", vm.Correo, StringComparison.OrdinalIgnoreCase));
+            
             if (dup)
             {
                 ModelState.AddModelError("", "Usuario o correo ya existe.");
@@ -189,11 +245,11 @@ namespace Internado.Web.Controllers
             Set(u, "Estado", vm.Estado);
             Set(u, "Correo", vm.Correo);
 
-            if      (P(u,"Usuario")  != null) Set(u, "Usuario",  vm.Usuario);
-            else if (P(u,"Usuario1") != null) Set(u, "Usuario1", vm.Usuario);
-            else if (P(u,"Login")    != null) Set(u, "Login",    vm.Usuario);
+            if (P(u, "Usuario") != null) Set(u, "Usuario", vm.Usuario);
+            else if (P(u, "Usuario1") != null) Set(u, "Usuario1", vm.Usuario);
+            else if (P(u, "Login") != null) Set(u, "Login", vm.Usuario);
 
-            if (P(u,"RolId") != null) Set(u, "RolId", vm.RolId);
+            if (P(u, "RolId") != null) Set(u, "RolId", vm.RolId);
 
             if (!string.IsNullOrWhiteSpace(vm.Password))
             {
@@ -202,18 +258,35 @@ namespace Internado.Web.Controllers
             }
 
             await _db.SaveChangesAsync();
+            
+            TempData["Success"] = "Usuario actualizado exitosamente";
             return RedirectToAction(nameof(Index));
         }
 
         // ================== Delete ==================
-        [HttpPost, ValidateAntiForgeryToken]
+        [HttpGet]
         public async Task<IActionResult> Delete(int id)
+        {
+            var qry = _db.Usuarios.AsQueryable();
+            try { qry = qry.Include("Rol"); } catch { }
+            
+            var usuario = await qry.AsNoTracking()
+                .FirstOrDefaultAsync(u => GetId(u) == id);
+
+            if (usuario == null) return NotFound();
+
+            return View(usuario);
+        }
+
+        [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var u = await _db.Usuarios.FindAsync(id);
             if (u != null)
             {
                 _db.Remove(u);
                 await _db.SaveChangesAsync();
+                TempData["Success"] = "Usuario eliminado exitosamente";
             }
             return RedirectToAction(nameof(Index));
         }

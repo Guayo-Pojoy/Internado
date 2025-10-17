@@ -1,6 +1,7 @@
 using Internado.Application.Services;
 using Internado.Infrastructure.Data;
 using Internado.Infrastructure.Security;
+using Internado.Web.Middleware;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -20,6 +21,7 @@ builder.Services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
 
 // DI: Servicios de aplicación
 builder.Services.AddScoped<IResidenteService, ResidenteService>();
+builder.Services.AddScoped<ILoginAttemptService, LoginAttemptService>();
 
 // Autenticación por cookies (seguro para app interna)
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -138,6 +140,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
+app.UseMiddleware<RoleAuthorizationMiddleware>();
 app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())

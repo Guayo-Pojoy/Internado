@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using Internado.Application.Services;
 using Internado.Infrastructure.Data;
 using Internado.Infrastructure.Security;
 using Internado.Web.Models.Account;
@@ -54,63 +55,76 @@ namespace Internado.Web.Controllers
         [HttpGet]
         public IActionResult Login(string? returnUrl = null) => View(new LoginViewModel { ReturnUrl = returnUrl });
 
-        [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel vm)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
-            if (!ModelState.IsValid) return View(vm);
+            if (!ModelState.IsValid)
+                return View(model);
 
-            // Traemos usuarios a memoria (evitamos referenciar propiedades que no existen en EF)
-            var users = await _db.Usuarios.Include("Rol").ToListAsync();
-            var user = users.FirstOrDefault(u =>
-            {
-                var uname = GetUserNameFromEntity(u) ?? "";
-                var mail  = GetProp<string>(u, "Correo") ?? "";
-                return string.Equals(uname, vm.UserName, StringComparison.OrdinalIgnoreCase)
-                       || string.Equals(mail, vm.UserName, StringComparison.OrdinalIgnoreCase);
-            });
+            var usuario = await _db.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.Usuario1 == model.UserName);
 
-            if (user == null)
+            var loginAttemptService = HttpContext.RequestServices.GetRequiredService<ILoginAttemptService>();
+            var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
+            const int MAX_INTENTOS = 5;
+
+            // VALIDAR: ¿Cuenta bloqueada?
+            if (await loginAttemptService.EstaCuentaBloqueadaAsync(model.UserName))
             {
-                ModelState.AddModelError("", "Usuario no encontrado.");
-                return View(vm);
+                ModelState.AddModelError("", "Cuenta bloqueada tras múltiples intentos fallidos. Intenta en 15 minutos.");
+                await loginAttemptService.RegistrarIntentoFallidoAsync(model.UserName, clientIp);
+                return View(model);
             }
 
-            // Estado (si existe)
-            var activo = GetProp<bool?>(user, "Estado");
-            if (activo.HasValue && !activo.Value)
+            // VALIDAR: ¿Usuario existe?
+            if (usuario == null)
             {
-                ModelState.AddModelError("", "Usuario inactivo.");
-                return View(vm);
+                await loginAttemptService.RegistrarIntentoFallidoAsync(model.UserName, clientIp);
+                ModelState.AddModelError("", "Usuario o contraseña incorrectos.");
+                return View(model);
             }
 
-            // Verificación de contraseña (funciona con byte[] o string)
-            var hashBase64 = GetHashBase64FromEntity(user);
-            if (string.IsNullOrWhiteSpace(hashBase64) || !_hasher.VerifyFromBase64(vm.Password, hashBase64))
+            // VALIDAR: ¿Usuario activo?
+            if (!usuario.Estado)
             {
-                ModelState.AddModelError("", "Credenciales inválidas.");
-                return View(vm);
+                await loginAttemptService.RegistrarIntentoFallidoAsync(model.UserName, clientIp);
+                ModelState.AddModelError("", "Cuenta desactivada. Contacta al administrador.");
+                return View(model);
             }
 
-            // Datos para Claims
-            var id       = GetProp<int?>(user, "Id")?.ToString() ?? "";
-            var nombre   = GetProp<string>(user, "Nombre") ?? (GetUserNameFromEntity(user) ?? "");
-            var correo   = GetProp<string>(user, "Correo") ?? "";
-            var rolNombre= GetProp<object>(user, "Rol") is {} rolObj
-                           ? (GetProp<string>(rolObj, "NombreRol") ?? "Usuario")
-                           : "Usuario";
+            // VALIDAR: ¿Contraseña correcta?
+            var passwordHasher = HttpContext.RequestServices.GetRequiredService<IPasswordHasher>();
+            var hashBase64 = Convert.ToBase64String(usuario.HashContrasena);
+            if (!passwordHasher.VerifyFromBase64(model.Password, hashBase64))
+            {
+                await loginAttemptService.RegistrarIntentoFallidoAsync(model.UserName, clientIp);
+                var intentosRestantes = MAX_INTENTOS - await loginAttemptService.ObtenerIntentosRecentesAsync(model.UserName);
+                ModelState.AddModelError("", $"Contraseña incorrecta. Intentos restantes: {intentosRestantes}");
+                return View(model);
+            }
+
+            // LOGIN EXITOSO
+            await loginAttemptService.LimpiarIntentosAsync(model.UserName);
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, id),
-                new Claim(ClaimTypes.Name, nombre),
-                new Claim(ClaimTypes.Email, correo),
-                new Claim(ClaimTypes.Role, rolNombre)
+                new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+                new(ClaimTypes.Name, usuario.Usuario1),
+                new(ClaimTypes.Email, usuario.Correo),
+                new(ClaimTypes.Role, usuario.Rol?.NombreRol ?? "Sin Rol")
             };
 
             var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+            var principal = new ClaimsPrincipal(identity);
 
-            return !string.IsNullOrEmpty(vm.ReturnUrl) ? Redirect(vm.ReturnUrl) : RedirectToAction("Index", "Home");
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal,
+                new AuthenticationProperties { IsPersistent = model.RememberMe });
+
+            return RedirectToAction("Index", "Dashboard");
         }
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
