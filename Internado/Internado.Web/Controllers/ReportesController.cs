@@ -35,6 +35,7 @@ public class ReportesController : Controller
 
         var query = _db.Asistencia
             .Include(a => a.Residente)
+            .ThenInclude(r => r.Grado)
             .Include(a => a.Curso)
             .Where(a => a.Fecha >= fechaInicioOnly && a.Fecha <= fechaFinOnly);
 
@@ -49,25 +50,26 @@ public class ReportesController : Controller
             .Select(g => new
             {
                 Residente = g.Key.NombreCompleto,
+                Grado = g.Key.Grado?.Nombre ?? "Sin grado",
                 Total = g.Count(),
                 Presentes = g.Count(a => a.Estado == "Presente"),
                 Ausentes = g.Count(a => a.Estado == "Ausente"),
                 Tardes = g.Count(a => a.Estado == "Tarde"),
-                PorcentajeAsistencia = g.Count() > 0 ? (g.Count(a => a.Estado == "Presente") * 100.0 / g.Count()) : 0
+                Porcentaje = Math.Round((double)g.Count(a => a.Estado == "Presente") / g.Count() * 100, 2)
             })
-            .OrderBy(r => r.Residente)
+            .OrderBy(r => r.Grado)
+            .ThenBy(r => r.Residente)
             .ToList();
 
         ViewBag.FechaInicio = fechaInicio;
         ViewBag.FechaFin = fechaFin;
-        ViewBag.CursoId = cursoId;
         ViewBag.Cursos = await _db.Cursos.ToListAsync();
 
         return View(resumen);
     }
 
     // GET: Descargar Reporte Excel Asistencia
-    public async Task<IActionResult> DescargarAsistenciaExcel(int? cursoId = null, DateTime? fechaInicio = null, DateTime? fechaFin = null)
+    public async Task<IActionResult> DescargarAsistenciaExcel(DateTime? fechaInicio = null, DateTime? fechaFin = null)
     {
         fechaInicio ??= DateTime.Today.AddMonths(-1);
         fechaFin ??= DateTime.Today;
@@ -75,26 +77,24 @@ public class ReportesController : Controller
         var fechaInicioOnly = DateOnly.FromDateTime(fechaInicio.Value);
         var fechaFinOnly = DateOnly.FromDateTime(fechaFin.Value);
 
-        var query = _db.Asistencia
+        var datos = await _db.Asistencia
             .Include(a => a.Residente)
+            .ThenInclude(r => r.Grado)
             .Include(a => a.Curso)
-            .Where(a => a.Fecha >= fechaInicioOnly && a.Fecha <= fechaFinOnly);
-
-        if (cursoId.HasValue)
-            query = query.Where(a => a.CursoId == cursoId);
-
-        var datos = await query.OrderByDescending(a => a.Fecha).ToListAsync();
+            .Where(a => a.Fecha >= fechaInicioOnly && a.Fecha <= fechaFinOnly)
+            .OrderByDescending(a => a.Fecha)
+            .ToListAsync();
 
         using (var workbook = new XLWorkbook())
         {
             var worksheet = workbook.Worksheets.Add("Asistencia");
 
-            // Encabezados con estilo
+            // Encabezados
             worksheet.Cell(1, 1).Value = "Fecha";
             worksheet.Cell(1, 2).Value = "Residente";
-            worksheet.Cell(1, 3).Value = "Curso";
-            worksheet.Cell(1, 4).Value = "Estado";
-            worksheet.Cell(1, 5).Value = "Observación";
+            worksheet.Cell(1, 3).Value = "Grado";
+            worksheet.Cell(1, 4).Value = "Curso";
+            worksheet.Cell(1, 5).Value = "Estado";
 
             // Estilo encabezados
             var headerRange = worksheet.Range(1, 1, 1, 5);
@@ -107,12 +107,12 @@ public class ReportesController : Controller
             {
                 worksheet.Cell(row, 1).Value = item.Fecha.ToString("dd/MM/yyyy");
                 worksheet.Cell(row, 2).Value = item.Residente.NombreCompleto;
-                worksheet.Cell(row, 3).Value = item.Curso.Nombre;
-                worksheet.Cell(row, 4).Value = item.Estado;
-                worksheet.Cell(row, 5).Value = item.Observacion ?? "";
+                worksheet.Cell(row, 3).Value = item.Residente.Grado?.Nombre ?? "Sin grado";
+                worksheet.Cell(row, 4).Value = item.Curso.Nombre;
+                worksheet.Cell(row, 5).Value = item.Estado;
 
                 // Color según estado
-                var estadoCell = worksheet.Cell(row, 4);
+                var estadoCell = worksheet.Cell(row, 5);
                 if (item.Estado == "Presente")
                     estadoCell.Style.Fill.BackgroundColor = XLColor.LightGreen;
                 else if (item.Estado == "Ausente")
@@ -142,15 +142,18 @@ public class ReportesController : Controller
     {
         var query = _db.Calificaciones
             .Include(c => c.Residente)
+            .ThenInclude(r => r.Grado)
             .Include(c => c.Curso)
             .AsQueryable();
 
         if (cursoId.HasValue)
             query = query.Where(c => c.CursoId == cursoId);
 
-        var datos = await query.OrderBy(c => c.Residente.NombreCompleto).ToListAsync();
+        var datos = await query
+            .OrderBy(c => c.Residente.Grado.Nombre)
+            .ThenBy(c => c.Residente.NombreCompleto)
+            .ToListAsync();
 
-        ViewBag.CursoId = cursoId;
         ViewBag.Cursos = await _db.Cursos.ToListAsync();
         return View(datos);
     }
@@ -160,13 +163,16 @@ public class ReportesController : Controller
     {
         var query = _db.Calificaciones
             .Include(c => c.Residente)
+            .ThenInclude(r => r.Grado)
             .Include(c => c.Curso)
             .AsQueryable();
 
         if (cursoId.HasValue)
             query = query.Where(c => c.CursoId == cursoId);
 
-        var datos = await query.OrderBy(c => c.Curso.Nombre)
+        var datos = await query
+            .OrderBy(c => c.Residente.Grado.Nombre)
+            .ThenBy(c => c.Curso.Nombre)
             .ThenBy(c => c.Residente.NombreCompleto)
             .ToListAsync();
 
@@ -176,12 +182,13 @@ public class ReportesController : Controller
 
             // Encabezados
             worksheet.Cell(1, 1).Value = "Residente";
-            worksheet.Cell(1, 2).Value = "Curso";
-            worksheet.Cell(1, 3).Value = "Nota";
-            worksheet.Cell(1, 4).Value = "Fecha Registro";
+            worksheet.Cell(1, 2).Value = "Grado";
+            worksheet.Cell(1, 3).Value = "Curso";
+            worksheet.Cell(1, 4).Value = "Nota";
+            worksheet.Cell(1, 5).Value = "Fecha Registro";
 
             // Estilo encabezados
-            var headerRange = worksheet.Range(1, 1, 1, 4);
+            var headerRange = worksheet.Range(1, 1, 1, 5);
             headerRange.Style.Font.Bold = true;
             headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
             headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -190,12 +197,13 @@ public class ReportesController : Controller
             foreach (var item in datos)
             {
                 worksheet.Cell(row, 1).Value = item.Residente.NombreCompleto;
-                worksheet.Cell(row, 2).Value = item.Curso.Nombre;
-                worksheet.Cell(row, 3).Value = item.Nota;
-                worksheet.Cell(row, 4).Value = item.FechaRegistro.ToString("dd/MM/yyyy");
+                worksheet.Cell(row, 2).Value = item.Residente.Grado?.Nombre ?? "Sin grado";
+                worksheet.Cell(row, 3).Value = item.Curso.Nombre;
+                worksheet.Cell(row, 4).Value = item.Nota;
+                worksheet.Cell(row, 5).Value = item.FechaRegistro.ToString("dd/MM/yyyy");
 
                 // Color según nota
-                var notaCell = worksheet.Cell(row, 3);
+                var notaCell = worksheet.Cell(row, 4);
                 if (item.Nota >= 70)
                     notaCell.Style.Fill.BackgroundColor = XLColor.LightGreen;
                 else if (item.Nota >= 60)

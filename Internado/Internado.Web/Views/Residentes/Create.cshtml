@@ -73,6 +73,45 @@
                                 </div>
                                 <span asp-validation-for="DPI" class="text-danger small"></span>
                             </div>
+                            <div class="col-md-6">
+                                <label for="GradoId" class="form-label">
+                                    <i class="bi bi-bookmark-fill me-1"></i>Grado
+                                </label>
+                                <select name="GradoId" id="GradoId" class="form-select form-select-lg">
+                                    <option value="">-- Selecciona un grado --</option>
+                                    @{
+                                        var grados = ViewBag.Grados as List<Internado.Infrastructure.Models.Grado>;
+                                        if (grados != null)
+                                        {
+                                            foreach (var grado in grados.OrderBy(g => g.Nivel))
+                                            {
+                                                <option value="@grado.Id">@grado.Nombre</option>
+                                            }
+                                        }
+                                    }
+                                </select>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>Se matriculará automáticamente en los cursos del grado
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="HabitacionId" class="form-label">
+                                    <i class="bi bi-door-closed me-1"></i>Habitación
+                                </label>
+                                <select name="HabitacionId" id="HabitacionId" class="form-select form-select-lg">
+                                    <option value="">-- Selecciona una habitación --</option>
+                                    @{
+                                        var habitaciones = ViewBag.Habitaciones as List<Internado.Infrastructure.Models.Habitacion>;
+                                        if (habitaciones != null)
+                                        {
+                                            foreach (var hab in habitaciones.OrderBy(h => h.Numero))
+                                            {
+                                                <option value="@hab.Id">@hab.Numero - @hab.Tipo (@hab.Capacidad personas)</option>
+                                            }
+                                        }
+                                    }
+                                </select>
+                            </div>
                         </div>
                     </div>
 

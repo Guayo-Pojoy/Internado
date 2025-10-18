@@ -1,31 +1,34 @@
-@model List<Internado.Infrastructure.Models.Curso>
-
 @{
-    ViewData["Title"] = "Registrar Asistencia";
+    ViewData["Title"] = "Asistencia - Seleccionar Grado";
+    var grados = ViewBag.Grados as List<Internado.Infrastructure.Models.Grado>;
 }
 
 <div class="container mt-4">
-    <h2><i class="bi bi-check2-circle"></i> Registrar Asistencia</h2>
+    <h2>✅ Selecciona un Grado para Registrar Asistencia</h2>
 
-    @if (Model.Count == 0)
+    @if (grados?.Count == 0)
     {
         <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> No tienes cursos asignados.
+            No tienes grados asignados.
         </div>
     }
     else
     {
         <div class="row">
-            @foreach (var curso in Model)
+            @foreach (var grado in grados.OrderBy(g => g.Nivel))
             {
-                <div class="col-md-6 mb-3">
+                var cursosCount = grado.GradoCursos.Count(gc => gc.Activa);
+                <div class="col-md-4 mb-3">
                     <div class="card">
                         <div class="card-body">
-                            <h5 class="card-title">@curso.Nombre</h5>
-                            <a href="@Url.Action("RegistrarAsistencia", new { cursoId = curso.Id })"
-                               class="btn btn-primary btn-sm">
-                                <i class="bi bi-check2-circle"></i> Registrar Hoy
-                            </a>
+                            <h5 class="card-title">@grado.Nombre</h5>
+                            <p class="card-text">
+                                <strong>Cursos:</strong> @cursosCount
+                            </p>
+                            <button type="button" class="btn btn-primary btn-sm"
+                                    onclick="mostrarCursos(@grado.Id, '@grado.Nombre')">
+                                ✅ Ver Cursos
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -33,3 +36,41 @@
         </div>
     }
 </div>
+
+<!-- Modal para mostrar cursos -->
+<div class="modal fade" id="modalCursos" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cursos - <span id="gradoNombre"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="listaCursos">
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+    function mostrarCursos(gradoId, gradoNombre) {
+        document.getElementById('gradoNombre').textContent = gradoNombre;
+
+        fetch(`@Url.Action("ObtenerCursosPorGrado")/${gradoId}`)
+            .then(r => r.json())
+            .then(cursos => {
+                let html = '<ul class="list-group">';
+                cursos.forEach(c => {
+                    html += `<li class="list-group-item">
+                        <a href="@Url.Action("RegistrarAsistencia", new { cursoId = "" })${c.id}">
+                            ${c.nombre}
+                        </a>
+                    </li>`;
+                });
+                html += '</ul>';
+                document.getElementById('listaCursos').innerHTML = html;
+                new bootstrap.Modal(document.getElementById('modalCursos')).show();
+            });
+    }
+    </script>
+}

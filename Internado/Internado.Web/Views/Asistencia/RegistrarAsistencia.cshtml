@@ -19,59 +19,73 @@
         </div>
     }
 
-    <form asp-action="GuardarAsistencia" method="post">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="cursoId" value="@curso?.Id" />
-        <input type="hidden" name="fecha" value="@fecha.ToString("yyyy-MM-dd")" />
-
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th style="width: 30%;">Residente</th>
-                    <th style="width: 20%;">Estado</th>
-                    <th style="width: 50%;">Excusa/Justificación (opcional)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var residente in Model)
-                {
-                    var estadoActual = asistencias.TryGetValue(residente.Id, out var estado) ? estado : "Presente";
-                    var observacionActual = observaciones.TryGetValue(residente.Id, out var obs) ? obs : "";
-                    <tr>
-                        <td>@residente.NombreCompleto</td>
-                        <td>
-                            <select name="asistencia[residente_@residente.Id]"
-                                    class="form-select form-select-sm estado-select"
-                                    data-residente="@residente.Id">
-                                <option value="Presente" selected="@(estadoActual == "Presente")">Presente</option>
-                                <option value="Ausente" selected="@(estadoActual == "Ausente")">Ausente</option>
-                                <option value="Tarde" selected="@(estadoActual == "Tarde")">Tarde</option>
-                            </select>
-                        </td>
-                        <td>
-                            <input type="text"
-                                   name="excusa[residente_@residente.Id]"
-                                   class="form-control form-control-sm excusa-input"
-                                   data-residente="@residente.Id"
-                                   value="@observacionActual"
-                                   placeholder="Ej: Cita médica, asunto familiar..."
-                                   maxlength="250" />
-                            <small class="text-muted" id="excusa-help-@residente.Id" style="display: none;">
-                                <i class="bi bi-info-circle"></i> Campo recomendado para Ausente o Tarde
-                            </small>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-
-        <button type="submit" class="btn btn-success">
-            <i class="bi bi-check-lg"></i> Guardar Asistencia
-        </button>
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay residentes matriculados en este curso.
+        </div>
         <a href="@Url.Action("Index")" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Volver
         </a>
-    </form>
+    }
+    else
+    {
+        <form asp-action="GuardarAsistencia" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="cursoId" value="@curso?.Id" />
+            <input type="hidden" name="fecha" value="@fecha.ToString("yyyy-MM-dd")" />
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Residente</th>
+                        <th style="width: 10%;">Grado</th>
+                        <th style="width: 20%;">Estado</th>
+                        <th style="width: 45%;">Excusa/Justificación (opcional)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var residente in Model)
+                    {
+                        var estadoActual = asistencias.TryGetValue(residente.Id, out var estado) ? estado : "Presente";
+                        var observacionActual = observaciones.TryGetValue(residente.Id, out var obs) ? obs : "";
+                        <tr>
+                            <td>@residente.NombreCompleto</td>
+                            <td>@(residente.Grado?.Nombre ?? "Sin grado")</td>
+                            <td>
+                                <select name="asistencia[residente_@residente.Id]"
+                                        class="form-select form-select-sm estado-select"
+                                        data-residente="@residente.Id">
+                                    <option value="Presente" selected="@(estadoActual == "Presente")">Presente</option>
+                                    <option value="Ausente" selected="@(estadoActual == "Ausente")">Ausente</option>
+                                    <option value="Tarde" selected="@(estadoActual == "Tarde")">Tarde</option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text"
+                                       name="excusa[residente_@residente.Id]"
+                                       class="form-control form-control-sm excusa-input"
+                                       data-residente="@residente.Id"
+                                       value="@observacionActual"
+                                       placeholder="Ej: Cita médica, asunto familiar..."
+                                       maxlength="250" />
+                                <small class="text-muted" id="excusa-help-@residente.Id" style="display: none;">
+                                    <i class="bi bi-info-circle"></i> Campo recomendado para Ausente o Tarde
+                                </small>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-lg"></i> Guardar Asistencia
+            </button>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </form>
+    }
 </div>
 
 @section Scripts {

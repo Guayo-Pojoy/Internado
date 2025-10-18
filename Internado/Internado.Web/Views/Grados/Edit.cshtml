@@ -1,0 +1,32 @@
+@model Internado.Infrastructure.Models.Grado
+
+@{
+    ViewData["Title"] = "Editar Grado";
+}
+
+<div class="container mt-4">
+    <h2>✏️ Editar Grado</h2>
+
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="mt-4">
+        <div class="form-group mb-3">
+            <label for="nombre">Nombre del Grado</label>
+            <input type="text" name="nombre" id="nombre" class="form-control"
+                   value="@Model.Nombre" placeholder="Ej: 1er Año, 2do Año" required>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="nivel">Nivel</label>
+            <input type="number" name="nivel" id="nivel" class="form-control"
+                   value="@Model.Nivel" placeholder="Ej: 1, 2, 3" min="1" required>
+            <small class="text-muted">El nivel debe ser mayor a 0</small>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="descripcion">Descripción</label>
+            <textarea name="descripcion" id="descripcion" class="form-control" rows="3">@Model.Descripcion</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Actualizar Grado</button>
+        <a href="@Url.Action("Index")" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>

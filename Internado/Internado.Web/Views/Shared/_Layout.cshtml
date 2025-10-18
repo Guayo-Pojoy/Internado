@@ -45,8 +45,9 @@
       transition: var(--transition);
       z-index: 1000;
       box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-      overflow-y: auto;
       overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     #sidebar.collapsed {
@@ -114,6 +115,9 @@
 
     /* Navigation */
     .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
       padding: 1rem 0;
     }
 
@@ -181,9 +185,7 @@
 
     /* User Section */
     .sidebar-user {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
+      flex-shrink: 0;
       background: rgba(0,0,0,0.2);
       border-top: 1px solid rgba(255,255,255,0.1);
     }
@@ -475,6 +477,12 @@
             </a>
           </li>
           <li class="sidebar-nav-item">
+            <a href="/Grados" class="sidebar-nav-link">
+              <i class="bi bi-bookmark-fill"></i>
+              <span>Grados</span>
+            </a>
+          </li>
+          <li class="sidebar-nav-item">
             <a href="/Calificaciones" class="sidebar-nav-link">
               <i class="bi bi-journal-text"></i>
               <span>Calificaciones</span>
@@ -517,6 +525,12 @@
             <a href="/Cursos" class="sidebar-nav-link">
               <i class="bi bi-book"></i>
               <span>Cursos</span>
+            </a>
+          </li>
+          <li class="sidebar-nav-item">
+            <a href="/Grados" class="sidebar-nav-link">
+              <i class="bi bi-bookmark-fill"></i>
+              <span>Grados</span>
             </a>
           </li>
           <li class="sidebar-nav-item">

@@ -145,6 +145,20 @@ public class MedicoController : Controller
             return RedirectToAction("Medicamentos");
         }
 
+        // Validar que la cantidad no sea negativa
+        if (cantidad < 0)
+        {
+            TempData["Error"] = "La cantidad no puede ser negativa.";
+            return RedirectToAction("NuevoMedicamento");
+        }
+
+        // Validar que la fecha de vencimiento no sea pasada
+        if (fechaVencimiento < DateOnly.FromDateTime(DateTime.Today))
+        {
+            TempData["Error"] = "La fecha de vencimiento no puede ser una fecha pasada.";
+            return RedirectToAction("NuevoMedicamento");
+        }
+
         var medicamento = new Medicamento
         {
             Nombre = nombre,
@@ -167,6 +181,13 @@ public class MedicoController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DispensarMedicamento(int medicamentoId, int cantidad)
     {
+        // Validar que la cantidad sea positiva
+        if (cantidad <= 0)
+        {
+            TempData["Error"] = "La cantidad debe ser mayor a 0.";
+            return RedirectToAction("Medicamentos");
+        }
+
         var medicamento = await _db.Medicamentos.FindAsync(medicamentoId);
 
         if (medicamento == null || medicamento.StockActual < cantidad)

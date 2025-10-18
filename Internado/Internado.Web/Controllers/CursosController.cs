@@ -32,7 +32,6 @@ public class CursosController : Controller
         {
             // Admin ve todos los cursos
             cursos = _db.Cursos
-                .Include(c => c.Docente)
                 .Include(c => c.AsignacionesDocentes)
                     .ThenInclude(ad => ad.Docente);
         }
@@ -41,7 +40,6 @@ public class CursosController : Controller
             // Docente solo ve sus cursos asignados
             cursos = _db.Cursos
                 .Where(c => c.AsignacionesDocentes.Any(ad => ad.DocenteId == usuarioId && ad.Activa))
-                .Include(c => c.Docente)
                 .Include(c => c.AsignacionesDocentes)
                     .ThenInclude(ad => ad.Docente);
         }
@@ -92,12 +90,21 @@ public class CursosController : Controller
 
         var curso = new Curso
         {
-            Nombre = nombre,
-            DocenteId = docentePrincipalId
+            Nombre = nombre
         };
 
         _db.Cursos.Add(curso);
         await _db.SaveChangesAsync();
+
+        // Asignar docente principal
+        var asignacionPrincipal = new DocenteCurso
+        {
+            DocenteId = docentePrincipalId,
+            CursoId = curso.Id,
+            FechaAsignacion = DateTime.UtcNow,
+            Activa = true
+        };
+        _db.DocenteCursos.Add(asignacionPrincipal);
 
         // Asignar docentes colaboradores
         if (docenteIds != null && docenteIds.Length > 0)
@@ -117,8 +124,9 @@ public class CursosController : Controller
                 };
                 _db.DocenteCursos.Add(asignacion);
             }
-            await _db.SaveChangesAsync();
         }
+
+        await _db.SaveChangesAsync();
 
         _logger.LogInformation($"Curso creado: {nombre}");
         TempData["Success"] = "Curso creado correctamente.";
@@ -173,15 +181,21 @@ public class CursosController : Controller
         }
 
         curso.Nombre = nombre;
-        curso.DocenteId = docentePrincipalId;
 
         // Obtener asignaciones actuales
         var asignacionesActuales = curso.AsignacionesDocentes.Where(ad => ad.Activa).ToList();
         var docentesActuales = asignacionesActuales.Select(ad => ad.DocenteId).ToList();
 
+        // Agregar docente principal si no está
+        var docentesSeleccionados = new List<int>();
+        docentesSeleccionados.Add(docentePrincipalId);
+        if (docenteIds != null && docenteIds.Length > 0)
+        {
+            docentesSeleccionados.AddRange(docenteIds.Where(id => id != docentePrincipalId));
+        }
+
         // Docentes a agregar
-        var docentesNuevos = (docenteIds ?? Array.Empty<int>())
-            .Where(did => did != docentePrincipalId) // Excluir docente principal
+        var docentesNuevos = docentesSeleccionados
             .Except(docentesActuales)
             .ToList();
 
@@ -199,7 +213,7 @@ public class CursosController : Controller
 
         // Docentes a quitar
         var docentesQuitar = docentesActuales
-            .Except(docenteIds ?? Array.Empty<int>())
+            .Except(docentesSeleccionados)
             .ToList();
 
         foreach (var docenteId in docentesQuitar)
@@ -222,7 +236,6 @@ public class CursosController : Controller
         var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
 
         var curso = await _db.Cursos
-            .Include(c => c.Docente)
             .Include(c => c.AsignacionesDocentes)
                 .ThenInclude(ad => ad.Docente)
             .Include(c => c.Calificaciones)
@@ -234,7 +247,6 @@ public class CursosController : Controller
 
         // Validar acceso
         if (userRole != "Administrador" &&
-            curso.DocenteId != usuarioId &&
             !curso.AsignacionesDocentes.Any(ad => ad.DocenteId == usuarioId && ad.Activa))
         {
             return Forbid();

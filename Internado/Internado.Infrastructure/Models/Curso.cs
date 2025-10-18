@@ -15,8 +15,6 @@ public partial class Curso
     [StringLength(100)]
     public string Nombre { get; set; } = null!;
 
-    public int DocenteId { get; set; }
-
     [InverseProperty("Curso")]
     public virtual ICollection<Asistencium> Asistencia { get; set; } = new List<Asistencium>();
 
@@ -26,7 +24,9 @@ public partial class Curso
     [InverseProperty("Curso")]
     public virtual ICollection<Calificacione> Calificaciones { get; set; } = new List<Calificacione>();
 
-    [ForeignKey("DocenteId")]
-    [InverseProperty("Cursos")]
-    public virtual Usuario Docente { get; set; } = null!;
+    [InverseProperty("Curso")]
+    public virtual ICollection<GradoCurso> GradoCursos { get; set; } = new List<GradoCurso>();
+
+    [InverseProperty("Curso")]
+    public virtual ICollection<Matricula> Matriculas { get; set; } = new List<Matricula>();
 }

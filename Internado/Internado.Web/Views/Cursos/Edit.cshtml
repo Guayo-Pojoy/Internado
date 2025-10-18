@@ -48,7 +48,8 @@
                                 <option value="">-- Seleccionar --</option>
                                 @foreach (var docente in docentes)
                                 {
-                                    <option value="@docente.Id" selected="@(docente.Id == Model.DocenteId)">
+                                    var isPrincipal = docentesAsignados.Any() && docentesAsignados.First() == docente.Id;
+                                    <option value="@docente.Id" selected="@isPrincipal">
                                         @docente.Nombre
                                     </option>
                                 }
@@ -71,7 +72,7 @@
                             @foreach (var docente in docentes)
                             {
                                 var isAsignado = docentesAsignados.Contains(docente.Id);
-                                var isPrincipal = docente.Id == Model.DocenteId;
+                                var isPrincipal = docentesAsignados.Any() && docentesAsignados.First() == docente.Id;
 
                                 <div class="col-md-4 mb-2">
                                     <div class="form-check">

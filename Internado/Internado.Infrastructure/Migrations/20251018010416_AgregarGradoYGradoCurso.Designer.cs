@@ -4,6 +4,7 @@ using Internado.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Internado.Infrastructure.Migrations
 {
     [DbContext(typeof(InternadoDbContext))]
-    partial class InternadoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251018010416_AgregarGradoYGradoCurso")]
+    partial class AgregarGradoYGradoCurso
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -174,12 +177,17 @@ namespace Internado.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("DocenteId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("DocenteId");
 
                     b.ToTable("Cursos", "aca");
                 });
@@ -428,49 +436,6 @@ namespace Internado.Infrastructure.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("LoginAttempts");
-                });
-
-            modelBuilder.Entity("Internado.Infrastructure.Models.Matricula", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activa")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<int>("CursoId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("FechaMatricula")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("(sysutcdatetime())");
-
-                    b.Property<string>("Periodo")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Razon")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<int>("ResidenteId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CursoId");
-
-                    b.HasIndex("ResidenteId", "CursoId", "Periodo")
-                        .IsUnique()
-                        .HasFilter("[Periodo] IS NOT NULL");
-
-                    b.ToTable("Matriculas");
                 });
 
             modelBuilder.Entity("Internado.Infrastructure.Models.Medicamento", b =>
@@ -837,6 +802,17 @@ namespace Internado.Infrastructure.Migrations
                     b.Navigation("Residente");
                 });
 
+            modelBuilder.Entity("Internado.Infrastructure.Models.Curso", b =>
+                {
+                    b.HasOne("Internado.Infrastructure.Models.Usuario", "Docente")
+                        .WithMany("Cursos")
+                        .HasForeignKey("DocenteId")
+                        .IsRequired()
+                        .HasConstraintName("FK_Cursos_Docente");
+
+                    b.Navigation("Docente");
+                });
+
             modelBuilder.Entity("Internado.Infrastructure.Models.DocenteCurso", b =>
                 {
                     b.HasOne("Internado.Infrastructure.Models.Curso", "Curso")
@@ -914,27 +890,6 @@ namespace Internado.Infrastructure.Migrations
                     b.Navigation("UsuarioNavigation");
                 });
 
-            modelBuilder.Entity("Internado.Infrastructure.Models.Matricula", b =>
-                {
-                    b.HasOne("Internado.Infrastructure.Models.Curso", "Curso")
-                        .WithMany("Matriculas")
-                        .HasForeignKey("CursoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Matricula_Curso");
-
-                    b.HasOne("Internado.Infrastructure.Models.Residente", "Residente")
-                        .WithMany("Matriculas")
-                        .HasForeignKey("ResidenteId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_Matricula_Residente");
-
-                    b.Navigation("Curso");
-
-                    b.Navigation("Residente");
-                });
-
             modelBuilder.Entity("Internado.Infrastructure.Models.MovimientosMedicamento", b =>
                 {
                     b.HasOne("Internado.Infrastructure.Models.Medicamento", "Medicamento")
@@ -991,8 +946,6 @@ namespace Internado.Infrastructure.Migrations
                     b.Navigation("Calificaciones");
 
                     b.Navigation("GradoCursos");
-
-                    b.Navigation("Matriculas");
                 });
 
             modelBuilder.Entity("Internado.Infrastructure.Models.Grado", b =>
@@ -1023,8 +976,6 @@ namespace Internado.Infrastructure.Migrations
                     b.Navigation("HistorialAcademicos");
 
                     b.Navigation("HistorialMedicos");
-
-                    b.Navigation("Matriculas");
                 });
 
             modelBuilder.Entity("Internado.Infrastructure.Models.Role", b =>
@@ -1035,6 +986,8 @@ namespace Internado.Infrastructure.Migrations
             modelBuilder.Entity("Internado.Infrastructure.Models.Usuario", b =>
                 {
                     b.Navigation("Consulta");
+
+                    b.Navigation("Cursos");
 
                     b.Navigation("DocenteCursos");
 

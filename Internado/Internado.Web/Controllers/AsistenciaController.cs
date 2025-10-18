@@ -24,12 +24,39 @@ public class AsistenciaController : Controller
     {
         var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
 
-        // Solo obtener cursos asignados al docente
-        var cursos = await _db.Cursos
+        // Obtener grados con sus cursos asignados al docente
+        var grados = await _db.Grados
+            .Where(g => g.Estado == "Activo")
+            .Include(g => g.GradoCursos)
+            .ThenInclude(gc => gc.Curso)
+            .ThenInclude(c => c.AsignacionesDocentes)
+            .ToListAsync();
+
+        // Filtrar solo grados que tienen cursos asignados a este docente
+        var gradosConCursos = grados
+            .Where(g => g.GradoCursos.Any(gc =>
+                gc.Activa &&
+                gc.Curso.AsignacionesDocentes.Any(ad => ad.DocenteId == usuarioId && ad.Activa)))
+            .ToList();
+
+        ViewBag.Grados = gradosConCursos;
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ObtenerCursosPorGrado(int gradoId)
+    {
+        var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+        var cursos = await _db.GradoCursos
+            .Where(gc => gc.GradoId == gradoId && gc.Activa)
+            .Include(gc => gc.Curso)
+            .ThenInclude(c => c.AsignacionesDocentes)
+            .Select(gc => gc.Curso)
             .Where(c => c.AsignacionesDocentes.Any(ad => ad.DocenteId == usuarioId && ad.Activa))
             .ToListAsync();
 
-        return View(cursos);
+        return Json(cursos.Select(c => new { id = c.Id, nombre = c.Nombre }));
     }
 
     // GET: Formulario de asistencia
@@ -43,6 +70,9 @@ public class AsistenciaController : Controller
         var curso = await _db.Cursos
             .Include(c => c.Asistencia)
             .Include(c => c.AsignacionesDocentes)
+            .Include(c => c.Matriculas)
+            .ThenInclude(m => m.Residente)
+            .ThenInclude(r => r.Grado)
             .FirstOrDefaultAsync(c => c.Id == cursoId);
 
         if (curso == null)
@@ -53,9 +83,13 @@ public class AsistenciaController : Controller
         if (!tieneAcceso)
             return Unauthorized("No tienes permiso para este curso.");
 
-        var residentes = await _db.Residentes
-            .Where(r => r.Estado == "Activa")
-            .ToListAsync();
+        // Obtener residentes matriculados en el curso
+        var residentesMatriculados = curso.Matriculas
+            .Where(m => m.Activa)
+            .Select(m => m.Residente)
+            .Distinct()
+            .OrderBy(r => r.NombreCompleto)
+            .ToList();
 
         var asistenciasDelDia = curso.Asistencia
             .Where(a => a.Fecha == fechaOnly)
@@ -70,7 +104,7 @@ public class AsistenciaController : Controller
         ViewBag.Asistencias = asistenciasDelDia;
         ViewBag.Observaciones = observacionesDelDia;
 
-        return View(residentes);
+        return View(residentesMatriculados);
     }
 
     // POST: Guardar asistencia en lote
@@ -83,12 +117,13 @@ public class AsistenciaController : Controller
 
         var curso = await _db.Cursos
             .Include(c => c.AsignacionesDocentes)
+            .Include(c => c.Matriculas)
             .FirstOrDefaultAsync(c => c.Id == cursoId);
 
         if (curso == null)
             return Unauthorized();
 
-        // Validar acceso
+        // 1. Validar acceso del docente
         var tieneAcceso = curso.AsignacionesDocentes.Any(ad => ad.DocenteId == usuarioId && ad.Activa);
         if (!tieneAcceso)
             return Unauthorized("No tienes permiso para este curso.");
@@ -101,6 +136,11 @@ public class AsistenciaController : Controller
             if (int.TryParse(item.Key.Replace("residente_", ""), out var residenteId) &&
                 estados.Contains(item.Value))
             {
+                // 2. Validar que el residente está matriculado
+                var matricula_valida = curso.Matriculas.Any(m => m.ResidenteId == residenteId && m.Activa);
+                if (!matricula_valida)
+                    continue; // Ignorar si no está matriculado
+
                 // Obtener la excusa si existe
                 var observacion = excusa?.TryGetValue(item.Key, out var obs) == true ? obs?.Trim() : null;
                 if (string.IsNullOrWhiteSpace(observacion))
@@ -132,7 +172,7 @@ public class AsistenciaController : Controller
         }
 
         await _db.SaveChangesAsync();
-        _logger.LogInformation($"Asistencia guardada para curso {cursoId} en fecha {fecha}");
+        _logger.LogInformation($"Asistencia guardada: Curso {cursoId}, Fecha {fecha}");
 
         TempData["Success"] = "Asistencia registrada correctamente.";
         return RedirectToAction("RegistrarAsistencia", new { cursoId, fecha });

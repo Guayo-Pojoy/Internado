@@ -2,9 +2,11 @@
 
 @{
     ViewData["Title"] = "Detalles del Curso";
-    var colaboradores = Model.AsignacionesDocentes
-        .Where(ad => ad.Activa && ad.DocenteId != Model.DocenteId)
+    var docentesActivos = Model.AsignacionesDocentes
+        .Where(ad => ad.Activa)
         .ToList();
+    var docentePrincipal = docentesActivos.FirstOrDefault();
+    var colaboradores = docentesActivos.Skip(1).ToList();
     var totalEstudiantes = Model.Calificaciones.Select(c => c.ResidenteId).Distinct().Count();
     var userRole = User?.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
 }
@@ -101,9 +103,16 @@
                     <div class="mb-3">
                         <strong>Docente Principal:</strong>
                         <div class="mt-2">
-                            <span class="badge bg-primary p-2">
-                                <i class="bi bi-person-circle"></i> @Model.Docente.Nombre
-                            </span>
+                            @if (docentePrincipal != null)
+                            {
+                                <span class="badge bg-primary p-2">
+                                    <i class="bi bi-person-circle"></i> @docentePrincipal.Docente.Nombre
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Sin asignar</span>
+                            }
                         </div>
                     </div>
 

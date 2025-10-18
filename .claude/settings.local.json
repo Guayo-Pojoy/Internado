@@ -5,7 +5,10 @@
       "Bash(if not exist \"Internado\\Internado.Web\\Views\\Asistencia\" mkdir \"Internado\\Internado.Web\\Views\\Asistencia\")",
       "Bash(dotnet ef migrations add:*)",
       "Bash(dotnet ef database update:*)",
-      "Bash(if not exist \"Internado\\Internado.Web\\Views\\Cursos\" mkdir \"Internado\\Internado.Web\\Views\\Cursos\")"
+      "Bash(if not exist \"Internado\\Internado.Web\\Views\\Cursos\" mkdir \"Internado\\Internado.Web\\Views\\Cursos\")",
+      "Bash(dotnet run)",
+      "Bash(Select-String -Pattern \"error\")",
+      "Bash(Select-Object -First 15)"
     ],
     "deny": [],
     "ask": []

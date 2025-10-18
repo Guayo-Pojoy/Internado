@@ -28,6 +28,9 @@ public partial class InternadoDbContext : DbContext
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public virtual DbSet<DocenteCurso> DocenteCursos { get; set; }
     public virtual DbSet<LoginAttempt> LoginAttempts { get; set; }
+    public virtual DbSet<Grado> Grados { get; set; }
+    public virtual DbSet<GradoCurso> GradoCursos { get; set; }
+    public virtual DbSet<Matricula> Matriculas { get; set; }
     public virtual DbSet<vw_Indicadore> vw_Indicadores { get; set; }
     public virtual DbSet<vw_ReportesGenerale> vw_ReportesGenerales { get; set; }
      
@@ -63,13 +66,6 @@ public partial class InternadoDbContext : DbContext
                 .HasConstraintName("FK_Cons_Med");
 
             entity.HasOne(d => d.Residente).WithMany(p => p.Consulta).HasConstraintName("FK_Cons_Res");
-        });
-
-        modelBuilder.Entity<Curso>(entity =>
-        {
-            entity.HasOne(d => d.Docente).WithMany(p => p.Cursos)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Cursos_Docente");
         });
 
         modelBuilder.Entity<HistorialAcademico>(entity =>
@@ -158,6 +154,69 @@ public partial class InternadoDbContext : DbContext
 
             // Índice único: un docente no puede estar asignado dos veces al mismo curso
             entity.HasIndex(e => new { e.DocenteId, e.CursoId }).IsUnique();
+        });
+
+        modelBuilder.Entity<Grado>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Nombre).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Estado).HasMaxLength(20).HasDefaultValue("Activo");
+            entity.Property(e => e.FechaCreacion).HasDefaultValueSql("(sysutcdatetime())");
+        });
+
+        modelBuilder.Entity<GradoCurso>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Activa).HasDefaultValue(true);
+            entity.Property(e => e.FechaAsignacion).HasDefaultValueSql("(sysutcdatetime())");
+
+            entity.HasOne(d => d.Grado)
+                .WithMany(p => p.GradoCursos)
+                .HasForeignKey(d => d.GradoId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_GradoCurso_Grado");
+
+            entity.HasOne(d => d.Curso)
+                .WithMany(p => p.GradoCursos)
+                .HasForeignKey(d => d.CursoId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_GradoCurso_Curso");
+
+            // Índice único: un curso no puede estar asignado dos veces al mismo grado
+            entity.HasIndex(e => new { e.GradoId, e.CursoId }).IsUnique();
+        });
+
+        modelBuilder.Entity<Residente>(entity =>
+        {
+            entity.HasOne(d => d.Grado)
+                .WithMany(p => p.Residentes)
+                .HasForeignKey(d => d.GradoId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_Residente_Grado");
+        });
+
+        modelBuilder.Entity<Matricula>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Periodo).HasMaxLength(20);
+            entity.Property(e => e.FechaMatricula).HasDefaultValueSql("(sysutcdatetime())");
+            entity.Property(e => e.Activa).HasDefaultValue(true);
+            entity.Property(e => e.Razon).HasMaxLength(200);
+
+            entity.HasOne(m => m.Residente)
+                .WithMany(r => r.Matriculas)
+                .HasForeignKey(m => m.ResidenteId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_Matricula_Residente");
+
+            entity.HasOne(m => m.Curso)
+                .WithMany(c => c.Matriculas)
+                .HasForeignKey(m => m.CursoId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_Matricula_Curso");
+
+            // Índice único: residente no puede estar matriculado dos veces en el mismo curso en el mismo período
+            entity.HasIndex(e => new { e.ResidenteId, e.CursoId, e.Periodo }).IsUnique();
         });
 
         // === Configuración de RESIDENTE usando ResidenteConfiguration ===

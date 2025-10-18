@@ -37,12 +37,17 @@ namespace Internado.Infrastructure.Models
         [Display(Name = "Habitación")]
         public int? HabitacionId { get; set; }
 
+        [Display(Name = "Grado")]
+        public int? GradoId { get; set; }
+
         // ===== Navegación esperada por el DbContext =====
         public virtual ICollection<Asistencium> Asistencia { get; set; } = new List<Asistencium>();
         public virtual ICollection<Calificacione> Calificaciones { get; set; } = new List<Calificacione>();
         public virtual ICollection<Consulta> Consulta { get; set; } = new List<Consulta>();
         public virtual ICollection<HistorialAcademico> HistorialAcademicos { get; set; } = new List<HistorialAcademico>();
         public virtual ICollection<HistorialMedico> HistorialMedicos { get; set; } = new List<HistorialMedico>();
+        public virtual ICollection<Matricula> Matriculas { get; set; } = new List<Matricula>();
         public virtual Habitacion? Habitacion { get; set; }
+        public virtual Grado? Grado { get; set; }
     }
 }

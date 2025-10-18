@@ -1,0 +1,33 @@
+@model Internado.Infrastructure.Models.Grado
+
+@{
+    ViewData["Title"] = $"Asignar Cursos - {Model.Nombre}";
+    var cursos = ViewBag.Cursos as List<Internado.Infrastructure.Models.Curso>;
+    var cursosAsignados = ViewBag.CursosAsignados as List<int> ?? new();
+}
+
+<div class="container mt-4">
+    <h2>📚 @Model.Nombre - Asignar Cursos</h2>
+
+    <form asp-action="GuardarCursos" asp-route-id="@Model.Id" method="post" class="mt-4">
+        <div class="form-group mb-3">
+            <label>Selecciona los cursos para este grado:</label>
+            <div class="list-group">
+                @foreach (var curso in cursos)
+                {
+                    <div class="form-check">
+                        <input type="checkbox" name="cursoIds" value="@curso.Id"
+                               id="curso_@curso.Id" class="form-check-input"
+                               checked="@(cursosAsignados.Contains(curso.Id))">
+                        <label for="curso_@curso.Id" class="form-check-label">
+                            @curso.Nombre
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Guardar Asignación</button>
+        <a href="@Url.Action("Index")" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>

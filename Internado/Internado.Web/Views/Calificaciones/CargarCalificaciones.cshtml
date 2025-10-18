@@ -2,10 +2,11 @@
 
 @{
     ViewData["Title"] = $"Cargar Calificaciones - {Model.Nombre}";
+    var residentesMatriculados = ViewBag.ResidentesMatriculados as List<Internado.Infrastructure.Models.Residente>;
 }
 
 <div class="container mt-4">
-    <h2><i class="bi bi-pencil-square"></i> Cargar Calificaciones</h2>
+    <h2>📝 Cargar Calificaciones</h2>
     <p><strong>Curso:</strong> @Model.Nombre</p>
 
     @if (TempData["Success"] != null)
@@ -15,7 +16,6 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-
     @if (TempData["Error"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show">
@@ -24,44 +24,55 @@
         </div>
     }
 
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Estudiante</th>
-                <th>DPI</th>
-                <th>Nota Actual</th>
-                <th>Nueva Nota</th>
-                <th>Acción</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var residente in Model.Calificaciones.Select(c => c.Residente).Distinct())
-            {
-                var calificacion = Model.Calificaciones.FirstOrDefault(c => c.ResidenteId == residente.Id);
+    @if (residentesMatriculados?.Count == 0)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay residentes matriculados en este curso.
+        </div>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <form asp-action="GuardarCalificacion" asp-route-cursoId="@Model.Id" method="post">
-                        @Html.AntiForgeryToken()
-                        <td>@residente.NombreCompleto</td>
-                        <td>@residente.DPI</td>
-                        <td>@(calificacion?.Nota ?? 0)</td>
-                        <td>
-                            <input type="hidden" name="residenteId" value="@residente.Id" />
-                            <input type="hidden" name="cursoId" value="@Model.Id" />
-                            <input type="number" name="nota" min="0" max="100" step="0.1"
-                                   value="@(calificacion?.Nota ?? 0)" class="form-control form-control-sm" required />
-                        </td>
-                        <td>
-                            <button type="submit" class="btn btn-success btn-sm">
-                                <i class="bi bi-check-lg"></i> Guardar
-                            </button>
-                        </td>
-                    </form>
+                    <th>Residente</th>
+                    <th>DPI</th>
+                    <th>Grado</th>
+                    <th>Nota Actual</th>
+                    <th>Nueva Nota</th>
+                    <th>Acción</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var residente in residentesMatriculados.OrderBy(r => r.NombreCompleto))
+                {
+                    var calificacion = Model.Calificaciones.FirstOrDefault(c => c.ResidenteId == residente.Id);
+                    <tr>
+                        <form asp-action="GuardarCalificacion" asp-route-cursoId="@Model.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <td>@residente.NombreCompleto</td>
+                            <td>@residente.DPI</td>
+                            <td>@(residente.Grado?.Nombre ?? "Sin grado")</td>
+                            <td>@(calificacion?.Nota ?? 0)</td>
+                            <td>
+                                <input type="hidden" name="residenteId" value="@residente.Id" />
+                                <input type="hidden" name="cursoId" value="@Model.Id" />
+                                <input type="number" name="nota" min="0" max="100" step="0.1"
+                                       value="@(calificacion?.Nota ?? 0)" class="form-control form-control-sm" required />
+                            </td>
+                            <td>
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="bi bi-check-lg"></i> Guardar
+                                </button>
+                            </td>
+                        </form>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 
-    <a href="@Url.Action("Index")" class="btn btn-secondary">
+    <a href="@Url.Action("Index")" class="btn btn-secondary mt-3">
         <i class="bi bi-arrow-left"></i> Volver
     </a>
 </div>

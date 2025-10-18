@@ -52,17 +52,20 @@
                         <tbody>
                             @foreach (var curso in Model)
                             {
-                                var colaboradores = curso.AsignacionesDocentes
-                                    .Where(ad => ad.Activa && ad.DocenteId != curso.DocenteId)
+                                var docentes = curso.AsignacionesDocentes
+                                    .Where(ad => ad.Activa)
                                     .Select(ad => ad.Docente.Nombre)
                                     .ToList();
+
+                                var docentePrincipal = docentes.FirstOrDefault() ?? "Sin asignar";
+                                var colaboradores = docentes.Skip(1).ToList();
 
                                 <tr>
                                     <td>
                                         <strong>@curso.Nombre</strong>
                                     </td>
                                     <td>
-                                        <i class="bi bi-person-badge"></i> @curso.Docente.Nombre
+                                        <i class="bi bi-person-badge"></i> @docentePrincipal
                                     </td>
                                     <td>
                                         @if (colaboradores.Any())
