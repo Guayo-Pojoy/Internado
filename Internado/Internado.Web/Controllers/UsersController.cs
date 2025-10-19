@@ -263,6 +263,24 @@ namespace Internado.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // ================== Details ==================
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            var qry = _db.Usuarios.AsQueryable();
+            try { qry = qry.Include("Rol"); } catch { }
+
+            // Traer todos los usuarios a memoria primero
+            var usuarios = await qry.AsNoTracking().ToListAsync();
+
+            // Luego filtrar en memoria usando reflexión
+            var usuario = usuarios.FirstOrDefault(u => GetId(u) == id);
+
+            if (usuario == null) return NotFound();
+
+            return View(usuario);
+        }
+
         // ================== Delete ==================
         [HttpGet]
         public async Task<IActionResult> Delete(int id)

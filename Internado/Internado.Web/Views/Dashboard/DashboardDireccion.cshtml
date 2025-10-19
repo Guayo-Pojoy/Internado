@@ -1,0 +1,205 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var residentesPorGrado = ViewBag.ResidentesPorGrado as List<dynamic>;
+    var asistenciaGeneral = ViewBag.AsistenciaGeneral as List<dynamic>;
+    var residentesBajaAsistencia = ViewBag.ResidentesBajaAsistencia as List<dynamic>;
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">📋 Dashboard - Dirección Académica</h2>
+
+    <!-- Cards de resumen -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Residentes</h5>
+                    <h2>@ViewBag.TotalResidentes</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Cursos Activos</h5>
+                    <h2>@ViewBag.TotalCursos</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Habitaciones Ocupadas</h5>
+                    <h2>@ViewBag.HabitacionesOcupadas</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">% Ocupación</h5>
+                    <h2>@($"{ViewBag.PorcentajeOcupacion}%")</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Residentes por Grado -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">👥 Residentes por Grado</h5>
+                </div>
+                <div class="card-body">
+                    @if (residentesPorGrado?.Count == 0)
+                    {
+                        <p class="text-muted">Sin residentes asignados a grados</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Grado</th>
+                                        <th>Cantidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var grado in residentesPorGrado)
+                                    {
+                                        <tr>
+                                            <td>@grado.Grado</td>
+                                            <td><span class="badge bg-primary">@grado.Cantidad</span></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado de Habitaciones -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">🚪 Estado de Habitaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h4 class="text-success">@ViewBag.HabitacionesOcupadas</h4>
+                            <p class="small">Ocupadas</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-info">@ViewBag.HabitacionesDisponibles</h4>
+                            <p class="small">Disponibles</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-warning">@ViewBag.HabitacionesMantenimiento</h4>
+                            <p class="small">Mantenimiento</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asistencia General -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">✅ Asistencia General - Último Mes</h5>
+                </div>
+                <div class="card-body">
+                    @if (asistenciaGeneral?.Count == 0)
+                    {
+                        <p class="text-muted">Sin registros de asistencia</p>
+                    }
+                    else
+                    {
+                        <div class="row text-center">
+                            @foreach (var item in asistenciaGeneral.OrderBy(x => x.Estado))
+                            {
+                                var color = item.Estado == "Presente" ? "success" :
+                                           item.Estado == "Ausente" ? "danger" : "warning";
+                                <div class="col-md-4">
+                                    <h4 class="text-@color">@item.Cantidad</h4>
+                                    <p class="small">@item.Estado</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones Rápidas -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">⚡ Acciones Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <a href="/Residentes" class="btn btn-primary btn-sm btn-block mb-2" style="width: 100%;">Ver Residentes</a>
+                    <a href="/Habitaciones" class="btn btn-info btn-sm btn-block mb-2" style="width: 100%;">Ver Habitaciones</a>
+                    <a href="/Grados" class="btn btn-success btn-sm btn-block mb-2" style="width: 100%;">Ver Grados</a>
+                    <a href="/Reportes" class="btn btn-warning btn-sm btn-block" style="width: 100%;">Reportes</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Residentes con Baja Asistencia -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">⚠️ Residentes con Baja Asistencia (&lt; 80%)</h5>
+                </div>
+                <div class="card-body">
+                    @if (residentesBajaAsistencia?.Count == 0)
+                    {
+                        <p class="text-muted">Todos los residentes tienen buena asistencia</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Residente</th>
+                                        <th>Grado</th>
+                                        <th>Registros</th>
+                                        <th>Presentes</th>
+                                        <th>% Asistencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var res in residentesBajaAsistencia)
+                                    {
+                                        var porcentaje = res.TotalRegistros > 0 ?
+                                            Math.Round((double)res.Presentes / res.TotalRegistros * 100, 2) : 0;
+                                        <tr>
+                                            <td>@res.NombreCompleto</td>
+                                            <td>@res.Grado</td>
+                                            <td>@res.TotalRegistros</td>
+                                            <td>@res.Presentes</td>
+                                            <td>
+                                                <span class="badge bg-danger">@($"{porcentaje}%")</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

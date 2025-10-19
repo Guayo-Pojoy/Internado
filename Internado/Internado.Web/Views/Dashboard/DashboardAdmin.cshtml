@@ -1,0 +1,99 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">📊 Dashboard Administrativo</h2>
+
+    <!-- Cards de estadísticas principales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Usuarios</h5>
+                    <h2>@ViewBag.TotalUsuarios</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Residentes</h5>
+                    <h2>@ViewBag.TotalResidentes</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Cursos</h5>
+                    <h2>@ViewBag.TotalCursos</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Habitaciones</h5>
+                    <h2>@ViewBag.TotalHabitaciones</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Habitaciones -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Estado de Habitaciones</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h4 class="text-success">@ViewBag.HabitacionesOcupadas</h4>
+                            <p>Ocupadas</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-info">@ViewBag.HabitacionesDisponibles</h4>
+                            <p>Disponibles</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-warning">@ViewBag.HabitacionesMantenimiento</h4>
+                            <p>Mantenimiento</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medicamentos con stock bajo -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">⚠️ Alertas de Medicamentos</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Stock bajo:</strong> <span class="badge bg-danger">@ViewBag.MedicamentosStockBajo</span></p>
+                    <p class="text-muted">Medicamentos con stock por debajo del mínimo requerido</p>
+                    <a href="/Medico/Medicamentos" class="btn btn-sm btn-outline-danger">Ver Medicamentos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Docentes -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Personal Docente</h5>
+                </div>
+                <div class="card-body">
+                    <h3>@ViewBag.TotalDocentes docentes activos</h3>
+                    <p class="text-muted">Catedráticos disponibles para cursos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

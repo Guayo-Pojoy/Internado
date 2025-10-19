@@ -8,7 +8,14 @@
       "Bash(if not exist \"Internado\\Internado.Web\\Views\\Cursos\" mkdir \"Internado\\Internado.Web\\Views\\Cursos\")",
       "Bash(dotnet run)",
       "Bash(Select-String -Pattern \"error\")",
-      "Bash(Select-Object -First 15)"
+      "Bash(Select-Object -First 15)",
+      "Bash(dotnet sln list)",
+      "Bash(dotnet sln \"Internado\\Internado.sln\" list)",
+      "Bash(if not exist \"Internado\\Internado.Web\\Views\\Dashboard\" mkdir \"Internado\\Internado.Web\\Views\\Dashboard\")",
+      "Bash(dotnet run --project \"Internado\\Internado.Web\")",
+      "Bash(taskkill /F /PID 6380)",
+      "Bash(Stop-Process -Id 6380 -Force)",
+      "Bash(taskkill //F //PID 6380)"
     ],
     "deny": [],
     "ask": []

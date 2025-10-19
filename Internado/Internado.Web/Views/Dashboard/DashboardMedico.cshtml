@@ -1,0 +1,145 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var movimientosEsteMes = ViewBag.MovimientosEsteMes as List<dynamic>;
+    var medicamentosMasUsados = ViewBag.MedicamentosMasUsados as List<dynamic>;
+    var diagnosticosFrequentes = ViewBag.DiagnosticosFrequentes as List<dynamic>;
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">⚕️ Dashboard - Médico</h2>
+
+    <!-- Cards de resumen -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Consultas Totales</h5>
+                    <h2>@ViewBag.TotalConsultas</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Este Mes</h5>
+                    <h2>@ViewBag.ConsultasEsteMes</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Medicamentos</h5>
+                    <h2>@ViewBag.MedicamentosTotal</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Stock Bajo</h5>
+                    <h2>@ViewBag.MedicamentosStockBajo</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medicamentos Próximos a Vencer -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">⚠️ Stock Bajo (próximos 30 días)</h5>
+                </div>
+                <div class="card-body">
+                    <h3 class="text-danger">@ViewBag.MedicamentosProximos</h3>
+                    <p class="text-muted">Medicamentos que necesitan reorden</p>
+                    <a href="/Medico/Medicamentos" class="btn btn-sm btn-outline-danger">Ver Medicamentos</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Movimientos Este Mes -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">📦 Movimientos - Este Mes</h5>
+                </div>
+                <div class="card-body">
+                    @if (movimientosEsteMes?.Count == 0)
+                    {
+                        <p class="text-muted">Sin movimientos registrados</p>
+                    }
+                    else
+                    {
+                        <div class="row text-center">
+                            @foreach (var item in movimientosEsteMes)
+                            {
+                                <div class="col-md-6">
+                                    <h4>@item.Cantidad</h4>
+                                    <p>@item.Tipo</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Medicamentos Más Usados -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">💊 Top 5 Medicamentos Más Dispensados</h5>
+                </div>
+                <div class="card-body">
+                    @if (medicamentosMasUsados?.Count == 0)
+                    {
+                        <p class="text-muted">Sin dispensaciones en el último mes</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var med in medicamentosMasUsados)
+                            {
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>@med.Medicamento</span>
+                                    <span class="badge bg-info">@med.Cantidad</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Diagnósticos Frecuentes -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">🏥 Diagnósticos Frecuentes - Último Mes</h5>
+                </div>
+                <div class="card-body">
+                    @if (diagnosticosFrequentes?.Count == 0)
+                    {
+                        <p class="text-muted">Sin diagnósticos registrados</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var diag in diagnosticosFrequentes)
+                            {
+                                <li class="list-group-item d-flex justify-content-between">
+                                    <span>@diag.Diagnostico</span>
+                                    <span class="badge bg-success">@diag.Cantidad</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

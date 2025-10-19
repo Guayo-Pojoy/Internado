@@ -1,0 +1,219 @@
+@model object
+@{
+    ViewData["Title"] = "Detalles de Usuario";
+
+    // Acceder a las propiedades usando reflexión
+    string Nombre = Model.GetType().GetProperty("Nombre")?.GetValue(Model)?.ToString() ?? "";
+    string Usuario = Model.GetType().GetProperty("Usuario")?.GetValue(Model)?.ToString()
+                  ?? Model.GetType().GetProperty("Usuario1")?.GetValue(Model)?.ToString()
+                  ?? Model.GetType().GetProperty("Login")?.GetValue(Model)?.ToString()
+                  ?? "";
+    string Correo = Model.GetType().GetProperty("Correo")?.GetValue(Model)?.ToString()
+                 ?? Model.GetType().GetProperty("Email")?.GetValue(Model)?.ToString()
+                 ?? "";
+    int Id = (int?)Model.GetType().GetProperty("Id")?.GetValue(Model) ?? 0;
+    bool Estado = (bool?)Model.GetType().GetProperty("Estado")?.GetValue(Model) ?? false;
+    DateTime? FechaRegistro = Model.GetType().GetProperty("FechaRegistro")?.GetValue(Model) as DateTime?;
+    int IntentosFallidos = (int?)Model.GetType().GetProperty("IntentosFallidos")?.GetValue(Model) ?? 0;
+    DateTime? BloqueadoHasta = Model.GetType().GetProperty("BloqueadoHastaUtc")?.GetValue(Model) as DateTime?;
+
+    // Rol
+    var rolObj = Model.GetType().GetProperty("Rol")?.GetValue(Model);
+    string Rol = "";
+    if (rolObj != null)
+    {
+        Rol = rolObj.GetType().GetProperty("NombreRol")?.GetValue(rolObj)?.ToString()
+           ?? rolObj.GetType().GetProperty("Nombre")?.GetValue(rolObj)?.ToString()
+           ?? "Sin rol";
+    }
+
+    // Color para badge de rol
+    string rolBadgeClass = Rol switch
+    {
+        "Administrador" => "bg-danger",
+        "Docente" => "bg-primary",
+        "Medico" => "bg-success",
+        "Direccion" => "bg-warning",
+        _ => "bg-secondary"
+    };
+}
+
+<div class="container-fluid main-content">
+    <!-- Page Header -->
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">👤 Detalles de Usuario</h2>
+            <p class="text-muted mb-0">Información completa del usuario</p>
+        </div>
+        <div>
+            <a asp-action="Edit" asp-route-id="@Id" class="btn btn-warning">
+                <i class="bi bi-pencil me-2"></i>Editar
+            </a>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Card con información del usuario -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-person-badge me-2"></i>@Nombre
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <!-- Columna izquierda -->
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-1">
+                            <i class="bi bi-person me-1"></i>Nombre Completo
+                        </label>
+                        <p class="h6">@Nombre</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-1">
+                            <i class="bi bi-person-circle me-1"></i>Usuario
+                        </label>
+                        <p class="h6">@Usuario</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-1">
+                            <i class="bi bi-envelope me-1"></i>Correo Electrónico
+                        </label>
+                        <p class="h6">@Correo</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-1">
+                            <i class="bi bi-shield-check me-1"></i>Rol
+                        </label>
+                        <p>
+                            <span class="badge @rolBadgeClass fs-6">@Rol</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Columna derecha -->
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-1">
+                            <i class="bi bi-toggle-on me-1"></i>Estado
+                        </label>
+                        <p>
+                            @if (Estado)
+                            {
+                                <span class="badge bg-success fs-6">
+                                    <i class="bi bi-check-circle me-1"></i>Activo
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger fs-6">
+                                    <i class="bi bi-x-circle me-1"></i>Inactivo
+                                </span>
+                            }
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-1">
+                            <i class="bi bi-calendar-event me-1"></i>Fecha de Registro
+                        </label>
+                        <p class="h6">
+                            @if (FechaRegistro.HasValue)
+                            {
+                                @FechaRegistro.Value.ToString("dd/MM/yyyy HH:mm")
+                            }
+                            else
+                            {
+                                <span class="text-muted">No disponible</span>
+                            }
+                        </p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small mb-1">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Intentos Fallidos
+                        </label>
+                        <p>
+                            @if (IntentosFallidos > 0)
+                            {
+                                <span class="badge bg-warning fs-6">@IntentosFallidos intentos</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success fs-6">
+                                    <i class="bi bi-check-circle me-1"></i>0 intentos
+                                </span>
+                            }
+                        </p>
+                    </div>
+
+                    @if (BloqueadoHasta.HasValue && BloqueadoHasta.Value > DateTime.UtcNow)
+                    {
+                        <div class="mb-3">
+                            <label class="form-label text-muted small mb-1">
+                                <i class="bi bi-lock me-1"></i>Bloqueado Hasta
+                            </label>
+                            <p>
+                                <span class="badge bg-danger fs-6">
+                                    <i class="bi bi-lock me-1"></i>@BloqueadoHasta.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                </span>
+                            </p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="mt-4 pt-3 border-top">
+                <h6 class="text-muted mb-3">
+                    <i class="bi bi-info-circle me-2"></i>Información del Sistema
+                </h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <small class="text-muted">ID de Usuario</small>
+                        <p class="mb-0"><strong>@Id</strong></p>
+                    </div>
+                    <div class="col-md-8">
+                        <small class="text-muted">Estado de Seguridad</small>
+                        <p class="mb-0">
+                            @if (BloqueadoHasta.HasValue && BloqueadoHasta.Value > DateTime.UtcNow)
+                            {
+                                <span class="text-danger">
+                                    <i class="bi bi-shield-exclamation me-1"></i>Cuenta bloqueada temporalmente
+                                </span>
+                            }
+                            else if (IntentosFallidos > 0)
+                            {
+                                <span class="text-warning">
+                                    <i class="bi bi-shield-check me-1"></i>Cuenta activa con advertencias
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-success">
+                                    <i class="bi bi-shield-check me-1"></i>Cuenta segura
+                                </span>
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Volver al Listado
+                </a>
+                <a asp-action="Edit" asp-route-id="@Id" class="btn btn-warning">
+                    <i class="bi bi-pencil me-2"></i>Editar Usuario
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

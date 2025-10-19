@@ -30,19 +30,25 @@ public class GradosController : Controller
     }
 
     // GET: Crear grado
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
+        // Cargar todos los cursos disponibles para asignación
+        var cursos = await _db.Cursos.OrderBy(c => c.Nombre).ToListAsync();
+        ViewBag.Cursos = cursos;
+
         return View();
     }
 
     // POST: Guardar grado
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(string nombre, int nivel, string? descripcion)
+    public async Task<IActionResult> Create(string nombre, int nivel, string? descripcion, int[] cursoIds)
     {
         if (string.IsNullOrWhiteSpace(nombre))
         {
             ModelState.AddModelError("nombre", "El nombre del grado es requerido.");
+            var cursos = await _db.Cursos.OrderBy(c => c.Nombre).ToListAsync();
+            ViewBag.Cursos = cursos;
             return View();
         }
 
@@ -50,6 +56,8 @@ public class GradosController : Controller
         if (nivel < 1)
         {
             ModelState.AddModelError("nivel", "El nivel debe ser mayor a 0.");
+            var cursos = await _db.Cursos.OrderBy(c => c.Nombre).ToListAsync();
+            ViewBag.Cursos = cursos;
             return View();
         }
 
@@ -58,6 +66,8 @@ public class GradosController : Controller
         if (existe)
         {
             ModelState.AddModelError("nombre", "Ya existe un grado con este nombre.");
+            var cursos = await _db.Cursos.OrderBy(c => c.Nombre).ToListAsync();
+            ViewBag.Cursos = cursos;
             return View();
         }
 
@@ -72,7 +82,28 @@ public class GradosController : Controller
 
         _db.Grados.Add(grado);
         await _db.SaveChangesAsync();
-        _logger.LogInformation($"Grado creado: {nombre}");
+
+        // Asignar los cursos seleccionados al grado recién creado
+        if (cursoIds != null && cursoIds.Length > 0)
+        {
+            foreach (var cursoId in cursoIds)
+            {
+                var gradoCurso = new GradoCurso
+                {
+                    GradoId = grado.Id,
+                    CursoId = cursoId,
+                    Activa = true,
+                    FechaAsignacion = DateTime.UtcNow
+                };
+                _db.GradoCursos.Add(gradoCurso);
+            }
+            await _db.SaveChangesAsync();
+            _logger.LogInformation($"Grado creado: {nombre} con {cursoIds.Length} cursos asignados");
+        }
+        else
+        {
+            _logger.LogInformation($"Grado creado: {nombre} sin cursos asignados");
+        }
 
         TempData["Success"] = "Grado creado correctamente.";
         return RedirectToAction("Index");

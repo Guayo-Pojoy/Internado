@@ -1,238 +1,133 @@
-﻿@model Internado.Infrastructure.Models.Residente
+@model Internado.Infrastructure.Models.Residente
 @{
     ViewData["Title"] = "Editar Residente";
 }
 
-<div class="row">
-    <div class="col-lg-10 offset-lg-1 col-xl-8 offset-xl-2">
-        <!-- Breadcrumb -->
-        <nav aria-label="breadcrumb" class="mb-4">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a asp-action="Index"><i class="bi bi-house"></i> Residentes</a></li>
-                <li class="breadcrumb-item active">Editar: @Model.NombreCompleto</li>
-            </ol>
-        </nav>
-
-        <div class="card border-0">
-            <div class="card-header bg-gradient text-white py-3" style="background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);">
-                <h4 class="mb-0">
-                    <i class="bi bi-pencil-square me-2"></i>Editar Información del Residente
-                </h4>
-                <small class="opacity-75">Actualiza los datos de @Model.NombreCompleto</small>
-            </div>
-            <div class="card-body p-4">
-                <form asp-action="Edit" method="post" id="formResidente">
-                    <input type="hidden" asp-for="Id" />
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-                    
-                    <!-- Sección: Información Personal -->
-                    <div class="mb-4">
-                        <h5 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-person-vcard text-warning me-2"></i>Información Personal
-                        </h5>
-                        <div class="row g-3">
-                            <div class="col-md-8">
-                                <label asp-for="NombreCompleto" class="form-label">
-                                    <i class="bi bi-person me-1"></i>Nombre Completo <span class="text-danger">*</span>
-                                </label>
-                                <input asp-for="NombreCompleto" 
-                                       class="form-control form-control-lg" 
-                                       autofocus />
-                                <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="FechaNacimiento" class="form-label">
-                                    <i class="bi bi-calendar-event me-1"></i>Fecha de Nacimiento <span class="text-danger">*</span>
-                                </label>
-                                <input asp-for="FechaNacimiento" 
-                                       class="form-control form-control-lg date-picker" 
-                                       placeholder="dd/mm/aaaa" 
-                                       readonly />
-                                <span asp-validation-for="FechaNacimiento" class="text-danger small"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sección: Identificación -->
-                    <div class="mb-4">
-                        <h5 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-card-text text-warning me-2"></i>Identificación
-                        </h5>
-                        <div class="row g-3">
-                            <div class="col-md-12">
-                                <label asp-for="DPI" class="form-label">
-                                    <i class="bi bi-credit-card me-1"></i>DPI <span class="text-danger">*</span>
-                                </label>
-                                <input asp-for="DPI" 
-                                       class="form-control form-control-lg" 
-                                       maxlength="13"
-                                       pattern="[0-9]{13}" />
-                                <div class="form-text">
-                                    <i class="bi bi-info-circle me-1"></i>13 dígitos sin espacios
-                                </div>
-                                <span asp-validation-for="DPI" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="GradoId" class="form-label">
-                                    <i class="bi bi-bookmark-fill me-1"></i>Grado
-                                </label>
-                                <select name="GradoId" id="GradoId" class="form-select form-select-lg">
-                                    <option value="">-- Sin grado asignado --</option>
-                                    @{
-                                        var grados = ViewBag.Grados as List<Internado.Infrastructure.Models.Grado>;
-                                        if (grados != null)
-                                        {
-                                            foreach (var grado in grados.OrderBy(g => g.Nivel))
-                                            {
-                                                <option value="@grado.Id" selected="@(Model.GradoId == grado.Id)">@grado.Nombre</option>
-                                            }
-                                        }
-                                    }
-                                </select>
-                                <div class="form-text">
-                                    <i class="bi bi-info-circle me-1"></i>Cambiar el grado rematriculará automáticamente
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="HabitacionId" class="form-label">
-                                    <i class="bi bi-door-closed me-1"></i>Habitación
-                                </label>
-                                <select name="HabitacionId" id="HabitacionId" class="form-select form-select-lg">
-                                    <option value="">-- Sin habitación --</option>
-                                    @{
-                                        var habitaciones = ViewBag.Habitaciones as List<Internado.Infrastructure.Models.Habitacion>;
-                                        if (habitaciones != null)
-                                        {
-                                            foreach (var hab in habitaciones.OrderBy(h => h.Numero))
-                                            {
-                                                <option value="@hab.Id" selected="@(Model.HabitacionId == hab.Id)">@hab.Numero - @hab.Tipo (@hab.Capacidad personas)</option>
-                                            }
-                                        }
-                                    }
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sección: Tutor -->
-                    <div class="mb-4">
-                        <h5 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-person-check text-warning me-2"></i>Tutor Responsable
-                        </h5>
-                        <div class="row g-3">
-                            <div class="col-md-12">
-                                <label asp-for="Tutor" class="form-label">
-                                    <i class="bi bi-person-badge me-1"></i>Nombre del Tutor <span class="text-danger">*</span>
-                                </label>
-                                <input asp-for="Tutor" class="form-control form-control-lg" />
-                                <span asp-validation-for="Tutor" class="text-danger small"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sección: Estado y Fechas -->
-                    <div class="mb-4">
-                        <h5 class="border-bottom pb-2 mb-3">
-                            <i class="bi bi-calendar-check text-warning me-2"></i>Estado y Fechas
-                        </h5>
-                        <div class="row g-3">
-                            <div class="col-md-4">
-                                <label asp-for="Estado" class="form-label">
-                                    <i class="bi bi-shield-check me-1"></i>Estado <span class="text-danger">*</span>
-                                </label>
-                                <select asp-for="Estado" class="form-select form-select-lg">
-                                    <option value="Activa">✓ Activa</option>
-                                    <option value="Egresada">→ Egresada</option>
-                                    <option value="Suspendida">⏸ Suspendida</option>
-                                </select>
-                                <span asp-validation-for="Estado" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="FechaIngreso" class="form-label">
-                                    <i class="bi bi-calendar-plus me-1"></i>Fecha de Ingreso <span class="text-danger">*</span>
-                                </label>
-                                <input asp-for="FechaIngreso" 
-                                       class="form-control form-control-lg date-picker" 
-                                       placeholder="dd/mm/aaaa" 
-                                       readonly />
-                                <span asp-validation-for="FechaIngreso" class="text-danger small"></span>
-                            </div>
-                            <div class="col-md-4">
-                                <label asp-for="FechaEgreso" class="form-label">
-                                    <i class="bi bi-calendar-x me-1"></i>Fecha de Egreso
-                                </label>
-                                <input asp-for="FechaEgreso" 
-                                       class="form-control form-control-lg date-picker" 
-                                       placeholder="Opcional" 
-                                       readonly />
-                                <span asp-validation-for="FechaEgreso" class="text-danger small"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Botones de acción -->
-                    <div class="d-flex gap-2 justify-content-end pt-3 border-top">
-                        <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">
-                            <i class="bi bi-arrow-left me-2"></i>Cancelar
-                        </a>
-                        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-info btn-lg px-4">
-                            <i class="bi bi-eye me-2"></i>Ver Detalles
-                        </a>
-                        <button type="submit" class="btn btn-warning btn-lg px-5">
-                            <i class="bi bi-save me-2"></i>Guardar Cambios
-                        </button>
-                    </div>
-                </form>
-            </div>
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">✏️ Editar Residente</h2>
+            <p class="text-muted mb-0">Modificar información del residente</p>
         </div>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver
+        </a>
+    </div>
 
-        <!-- Historial de cambios -->
-        <div class="alert alert-light mt-4 border" role="alert">
-            <i class="bi bi-clock-history me-2"></i>
-            <strong>Última modificación:</strong> Los cambios se guardarán inmediatamente
+    <!-- Card con formulario -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="row g-3">
+                    <!-- Nombre Completo -->
+                    <div class="col-md-6">
+                        <label asp-for="NombreCompleto" class="form-label">
+                            <i class="bi bi-person me-1"></i>Nombre Completo
+                        </label>
+                        <input asp-for="NombreCompleto" class="form-control" placeholder="Nombre completo del residente" />
+                        <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+                    </div>
+
+                    <!-- DPI (deshabilitado) -->
+                    <div class="col-md-6">
+                        <label asp-for="DPI" class="form-label">
+                            <i class="bi bi-card-text me-1"></i>DPI
+                        </label>
+                        <input asp-for="DPI" class="form-control" disabled />
+                        <small class="form-text text-muted">El DPI no puede ser modificado</small>
+                    </div>
+
+                    <!-- Grado -->
+                    <div class="col-md-6">
+                        <label asp-for="GradoId" class="form-label">
+                            <i class="bi bi-bookmark-fill me-1"></i>Grado
+                        </label>
+                        <select asp-for="GradoId" class="form-select">
+                            <option value="">-- Seleccione un grado --</option>
+                            @if (ViewBag.Grados != null)
+                            {
+                                foreach (var grado in (IEnumerable<dynamic>)ViewBag.Grados)
+                                {
+                                    var id = grado.GetType().GetProperty("Id")?.GetValue(grado);
+                                    var nombre = grado.GetType().GetProperty("Nombre")?.GetValue(grado)?.ToString();
+                                    var estado = grado.GetType().GetProperty("Estado")?.GetValue(grado)?.ToString();
+
+                                    if (estado == "Activo")
+                                    {
+                                        <option value="@id">@nombre</option>
+                                    }
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="GradoId" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Habitación -->
+                    <div class="col-md-6">
+                        <label asp-for="HabitacionId" class="form-label">
+                            <i class="bi bi-door-closed me-1"></i>Habitación
+                        </label>
+                        <select asp-for="HabitacionId" class="form-select">
+                            <option value="">-- Seleccione una habitación --</option>
+                            @if (ViewBag.Habitaciones != null)
+                            {
+                                foreach (var hab in (IEnumerable<dynamic>)ViewBag.Habitaciones)
+                                {
+                                    var id = hab.GetType().GetProperty("Id")?.GetValue(hab);
+                                    var numero = hab.GetType().GetProperty("Numero")?.GetValue(hab)?.ToString();
+                                    var estado = hab.GetType().GetProperty("Estado")?.GetValue(hab)?.ToString();
+
+                                    if (estado == "Disponible" || id?.ToString() == Model.HabitacionId?.ToString())
+                                    {
+                                        <option value="@id">Habitación @numero</option>
+                                    }
+                                }
+                            }
+                        </select>
+                        <span asp-validation-for="HabitacionId" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Estado -->
+                    <div class="col-md-6">
+                        <label asp-for="Estado" class="form-label">
+                            <i class="bi bi-toggle-on me-1"></i>Estado
+                        </label>
+                        <select asp-for="Estado" class="form-select">
+                            <option value="Activo">Activo</option>
+                            <option value="Egresado">Egresado</option>
+                            <option value="Suspendido">Suspendido</option>
+                        </select>
+                        <span asp-validation-for="Estado" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Fecha de Nacimiento -->
+                    <div class="col-md-6">
+                        <label asp-for="FechaNacimiento" class="form-label">
+                            <i class="bi bi-calendar me-1"></i>Fecha de Nacimiento
+                        </label>
+                        <input asp-for="FechaNacimiento" type="date" class="form-control" />
+                        <span asp-validation-for="FechaNacimiento" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="mt-4 pt-3 border-top">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Actualizar Residente
+                    </button>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configurar Flatpickr
-            flatpickr('.date-picker', {
-                dateFormat: 'Y-m-d',
-                locale: 'es',
-                allowInput: false,
-                clickOpens: true,
-                monthSelectorType: 'dropdown',
-                yearSelectorType: 'dropdown',
-                prevArrow: '<i class="bi bi-chevron-left"></i>',
-                nextArrow: '<i class="bi bi-chevron-right"></i>',
-                maxDate: 'today'
-            });
-
-            // Validación DPI
-            const dpiInput = document.querySelector('input[name="DPI"]');
-            if (dpiInput) {
-                dpiInput.addEventListener('input', function(e) {
-                    this.value = this.value.replace(/[^0-9]/g, '');
-                    if (this.value.length === 13) {
-                        this.classList.remove('is-invalid');
-                        this.classList.add('is-valid');
-                    } else if (this.value.length > 0) {
-                        this.classList.remove('is-valid');
-                        this.classList.add('is-invalid');
-                    }
-                });
-            }
-
-            // Loading state en submit
-            const form = document.getElementById('formResidente');
-            form.addEventListener('submit', function(e) {
-                const submitBtn = form.querySelector('button[type="submit"]');
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
-            });
-        });
-    </script>
 }

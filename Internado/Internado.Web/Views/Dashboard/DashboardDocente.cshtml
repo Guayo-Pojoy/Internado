@@ -1,0 +1,126 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    var metricasCursos = ViewBag.MetricasCursos as List<dynamic>;
+    var asistenciaReciente = ViewBag.AsistenciaReciente as List<dynamic>;
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">📚 Dashboard - Mi Docencia</h2>
+
+    <!-- Cards de resumen -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Mis Cursos</h5>
+                    <h2>@ViewBag.TotalCursos</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Estudiantes</h5>
+                    <h2>@ViewBag.TotalEstudiantes</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Acciones Rápidas</h5>
+                    <a href="/Calificaciones" class="btn btn-light btn-sm me-2">📝 Calificaciones</a>
+                    <a href="/Asistencia" class="btn btn-light btn-sm">✅ Asistencia</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas de cursos -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">📊 Métricas por Curso</h5>
+                </div>
+                <div class="card-body">
+                    @if (metricasCursos?.Count == 0)
+                    {
+                        <p class="text-muted">No tienes cursos asignados</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Curso</th>
+                                        <th>Estudiantes</th>
+                                        <th>Calificaciones</th>
+                                        <th>Promedio</th>
+                                        <th>Registros de Asistencia</th>
+                                        <th>% Presencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var curso in metricasCursos)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a href="/Calificaciones/CargarCalificaciones/@curso.Id">
+                                                    @curso.Nombre
+                                                </a>
+                                            </td>
+                                            <td>@curso.EstudiantesMatriculados</td>
+                                            <td>@curso.CalificacionesRegistradas</td>
+                                            <td>
+                                                <span class="badge bg-info">@($"{curso.PromedioNotas:F2}")</span>
+                                            </td>
+                                            <td>@curso.RegistrosAsistencia</td>
+                                            <td>
+                                                <span class="badge bg-@(curso.PorcentajePresencia >= 80 ? "success" : "warning")">
+                                                    @($"{curso.PorcentajePresencia:F1}")%
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Asistencia Reciente -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">✅ Asistencia - Último Mes</h5>
+                </div>
+                <div class="card-body">
+                    @if (asistenciaReciente?.Count == 0)
+                    {
+                        <p class="text-muted">Sin registros de asistencia</p>
+                    }
+                    else
+                    {
+                        <div class="row text-center">
+                            @foreach (var item in asistenciaReciente.OrderBy(x => x.Estado))
+                            {
+                                var color = item.Estado == "Presente" ? "success" :
+                                           item.Estado == "Ausente" ? "danger" : "warning";
+                                <div class="col-md-4">
+                                    <h4 class="text-@color">@item.Cantidad</h4>
+                                    <p>@item.Estado</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
